@@ -54,15 +54,17 @@ export class AuthService {
    * Clearly marked as DEVELOPMENT accounts.
    */
   private static seedDevelopmentAccounts(): void {
-    // 1. Primary Election Authority Account
+    // DEVELOPMENT ONLY:
+    // Replace hardcoded demo credentials with secure backend authentication
+    // and environment-based secrets before production deployment.
     const salt1 = crypto.randomBytes(16).toString('hex');
     const authorityUser: StoredUser = {
       id: 'USR-AUTH-001',
-      username: 'admin@eci.gov.in',
+      username: 'admin',
       email: 'admin@eci.gov.in',
       fullName: 'Election Commission Authority (Chennai Central RO)',
       role: 'ELECTION_AUTHORITY',
-      passwordHash: this.hashPassword('AdminPassword@2026', salt1),
+      passwordHash: this.hashPassword('admin123', salt1),
       salt: salt1,
       failedLoginAttempts: 0,
       createdAt: new Date().toISOString(),
@@ -70,11 +72,32 @@ export class AuthService {
         userId: 'USR-AUTH-001',
         badgeNumber: 'ECI-RO-2026-TN-04',
         department: 'Election Conduct & Returning Office',
-        mfaEnabled: true,
+        mfaEnabled: false,
       },
     };
-    this.users.set('admin@eci.gov.in', authorityUser);
-    this.users.set('admin', authorityUser); // Alias for convenience
+    this.users.set('admin', authorityUser);
+    this.users.set('admin@eci.gov.in', authorityUser); // Alias for convenience
+
+    // New Election Admin account
+    const saltAdmin = crypto.randomBytes(16).toString('hex');
+    const electionAdminUser: StoredUser = {
+      id: 'USR-AUTH-002',
+      username: 'election_admin',
+      email: 'election_admin@eci.gov.in',
+      fullName: 'National Election Administrator',
+      role: 'ELECTION_AUTHORITY',
+      passwordHash: this.hashPassword('Admin@2026', saltAdmin),
+      salt: saltAdmin,
+      failedLoginAttempts: 0,
+      createdAt: new Date().toISOString(),
+      profile: {
+        userId: 'USR-AUTH-002',
+        badgeNumber: 'ECI-HQ-2026-01',
+        department: 'National Election Administration Directorate',
+        mfaEnabled: false,
+      },
+    };
+    this.users.set('election_admin', electionAdminUser);
 
     // 2. CAG Auditor Account
     const salt2 = crypto.randomBytes(16).toString('hex');
@@ -121,7 +144,7 @@ export class AuthService {
         description: `Admin login failed: User ${cleanUsername} does not exist.`,
         clientIpMasked: ipAddress ? SecurityMonitoringService.maskIp(ipAddress) : 'UNKNOWN',
       });
-      return { success: false, statusCode: 401, message: 'Invalid administrative credentials or account not found.' };
+      return { success: false, statusCode: 401, message: 'Invalid admin username or password.' };
     }
 
     // Role check: Voters cannot use admin login
@@ -157,7 +180,7 @@ export class AuthService {
           clientIpMasked: ipAddress ? SecurityMonitoringService.maskIp(ipAddress) : 'UNKNOWN',
         });
       }
-      return { success: false, statusCode: 401, message: 'Invalid administrative credentials.' };
+      return { success: false, statusCode: 401, message: 'Invalid admin username or password.' };
     }
 
     // Verify MFA OTP

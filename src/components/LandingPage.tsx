@@ -55,8 +55,8 @@ export const LandingPage: React.FC = () => {
               onClick={() =>
                 speakText(
                   isTamil
-                    ? 'பிளாக்செயின் அடிப்படையிலான தானியங்கி மற்றும் தனியுரிமை பாதுகாக்கப்பட்ட மின்னணு வாக்குப்பதிவு அமைப்பு.'
-                    : 'Blockchain-Based Automated and Privacy-Preserving E-Voting System. Please choose Election Authority Login or Voter Login.'
+                    ? 'பிளாக்செயின் அடிப்படையிலான தானியங்கி மற்றும் தனியுரிமை பாதுகாக்கப்பட்ட மின்னணு வாக்குப்பதிவு அமைப்பு. குடிமக்கள் வாக்காளர் உள்நுழைவுக்கு தொடரவும்.'
+                    : 'Blockchain-Based Automated and Privacy-Preserving E-Voting System. Please proceed to Citizen Voter Login.'
                 )
               }
               className="hover:text-white flex items-center space-x-1 transition-colors"
@@ -146,76 +146,38 @@ export const LandingPage: React.FC = () => {
               : 'Cryptographically verified citizen suffrage featuring zero voter-candidate linkage and end-to-end immutability.'}
           </p>
 
-          {/* TWO CLEAR PORTAL ENTRY CARDS */}
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto text-left">
-            {/* 1. Election Authority Login Card */}
-            <div className="bg-slate-800/80 border border-slate-700 rounded-2xl p-6 flex flex-col justify-between hover:border-blue-400 transition-all shadow-lg hover:shadow-blue-500/10 group">
+          {/* VOTER PORTAL ENTRY CARD */}
+          <div className="mt-8 max-w-xl mx-auto text-left">
+            <div className="bg-slate-800/90 border border-slate-700 rounded-2xl p-6 sm:p-8 flex flex-col justify-between hover:border-emerald-400 transition-all shadow-xl hover:shadow-emerald-500/10 group">
               <div>
-                <div className="flex items-center justify-between mb-3">
-                  <div className="p-2.5 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/30">
-                    <Lock className="w-6 h-6" />
+                <div className="flex items-center justify-between mb-4">
+                  <div className="p-3 rounded-xl bg-emerald-600/20 text-emerald-400 border border-emerald-500/30">
+                    <Vote className="w-7 h-7" />
                   </div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-950 text-blue-300 border border-blue-800">
-                    {isTamil ? 'தேர்தல் ஆணையம்' : 'Authority Portal'}
-                  </span>
-                </div>
-                <h2 className="text-lg font-bold text-white">
-                  {isTamil ? 'தேர்தல் ஆணைய உள்நுழைவு' : 'Election Authority Login'}
-                </h2>
-                <p className="text-xs text-slate-300 mt-2 leading-relaxed">
-                  {isTamil
-                    ? 'தேர்தல் நடத்தும் அலுவலர்கள் மற்றும் தேர்தல் ஆணைய அதிகாரிகளுக்கான பாதுகாப்பான மேலாண்மைத் தளம். MFA பாதுகாப்புடன் கூடியது.'
-                    : 'Dedicated portal for Election Returning Officers and Election Authority staff. Manage lifecycle, candidates, and inspect aggregate results.'}
-                </p>
-                <div className="mt-4 space-y-1.5 text-[11px] text-slate-400">
-                  <div className="flex items-center space-x-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Role: ELECTION_AUTHORITY</span>
-                  </div>
-                  <div className="flex items-center space-x-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Strictly cannot cast voter ballots</span>
-                  </div>
-                </div>
-              </div>
-
-              <button
-                id="election-authority-login-btn"
-                onClick={() => navigate('/admin/login')}
-                className="mt-6 w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold flex items-center justify-center space-x-2 transition-all shadow-md group-hover:bg-blue-500"
-              >
-                <span>{isTamil ? 'தேர்தல் ஆணைய உள்நுழைவு' : 'Election Authority Login'}</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* 2. Voter Login Card */}
-            <div className="bg-slate-800/80 border border-slate-700 rounded-2xl p-6 flex flex-col justify-between hover:border-emerald-400 transition-all shadow-lg hover:shadow-emerald-500/10 group">
-              <div>
-                <div className="flex items-center justify-between mb-3">
-                  <div className="p-2.5 rounded-xl bg-emerald-600/20 text-emerald-400 border border-emerald-500/30">
-                    <Vote className="w-6 h-6" />
-                  </div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800">
+                  <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded bg-emerald-950 text-emerald-300 border border-emerald-800">
                     {isTamil ? 'வாக்காளர் தளம்' : 'Citizen Voter'}
                   </span>
                 </div>
-                <h2 className="text-lg font-bold text-white">
+                <h2 className="text-xl font-bold text-white">
                   {isTamil ? 'வாக்காளர் உள்நுழைவு' : 'Voter Login'}
                 </h2>
-                <p className="text-xs text-slate-300 mt-2 leading-relaxed">
+                <p className="text-xs sm:text-sm text-slate-300 mt-2 leading-relaxed">
                   {isTamil
                     ? 'வாக்காளர் அடையாள அட்டை (EPIC) மற்றும் ஆதார் OTP வழியாக அங்கீகரித்து பாதுகாப்பாக வாக்களிக்கும் பொதுத்தளம்.'
                     : 'Citizen suffrage portal. Authenticate with Voter ID (EPIC) and UIDAI OTP to receive an isolated anonymous voting credential.'}
                 </p>
-                <div className="mt-4 space-y-1.5 text-[11px] text-slate-400">
-                  <div className="flex items-center space-x-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                <div className="mt-5 space-y-2 text-xs text-slate-300">
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                     <span>Single-use anonymous token</span>
                   </div>
-                  <div className="flex items-center space-x-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                     <span>Zero linkage between identity & ballot</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>Immutable cryptographic ledger verification</span>
                   </div>
                 </div>
               </div>
@@ -223,7 +185,7 @@ export const LandingPage: React.FC = () => {
               <button
                 id="voter-login-btn"
                 onClick={() => navigate('/voter/login')}
-                className="mt-6 w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold flex items-center justify-center space-x-2 transition-all shadow-md group-hover:bg-emerald-500"
+                className="mt-6 w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold flex items-center justify-center space-x-2 transition-all shadow-md group-hover:bg-emerald-500"
               >
                 <span>{isTamil ? 'வாக்காளர் உள்நுழைவு' : 'Voter Login'}</span>
                 <ArrowRight className="w-4 h-4" />
@@ -319,10 +281,10 @@ export const LandingPage: React.FC = () => {
               <li className="flex items-start space-x-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                 <span>
-                  <strong>{isTamil ? 'அதிகாரிகள் மாற்ற முடியாது' : 'No Admin Alteration'}:</strong>{' '}
+                  <strong>{isTamil ? 'மாற்ற முடியாத வாக்குகள்' : 'Tamper-Proof Ballots'}:</strong>{' '}
                   {isTamil
-                    ? 'தேர்தல் ஆணைய அதிகாரிகளாலோ அல்லது நிர்வாகிகளாலோ வாக்குகளை திருத்தவோ அல்லது நீக்கவோ முடியாது.'
-                    : 'Zero administrative API exists to modify ballots, alter votes, or tamper with consensus tallies.'}
+                    ? 'பதிவு செய்யப்பட்ட வாக்குகளை எந்தவொரு அமைப்பாலும் திருத்தவோ அல்லது நீக்கவோ முடியாது.'
+                    : 'Zero external or system API exists to modify ballots, alter votes, or tamper with consensus tallies.'}
                 </span>
               </li>
             </ul>
@@ -357,8 +319,8 @@ export const LandingPage: React.FC = () => {
                 <span>
                   <strong>{isTamil ? 'வாக்காளர் தேர்வு ரகசியம்' : 'No Voter-Candidate Linkage'}:</strong>{' '}
                   {isTamil
-                    ? 'வாக்காளர் யாருக்கு வாக்களித்தார் என்பதை எந்தவொரு நிர்வாகியோ கணினியோ பார்க்க முடியாது.'
-                    : 'Neither administrators nor database logs can reconstruct who an individual voted for.'}
+                    ? 'வாக்காளர் யாருக்கு வாக்களித்தார் என்பதை எந்தவொரு நபரோ அல்லது கணினியோ பார்க்க முடியாது.'
+                    : 'Neither system operators nor database logs can reconstruct who an individual voted for.'}
                 </span>
               </li>
               <li className="flex items-start space-x-2">
@@ -381,8 +343,8 @@ export const LandingPage: React.FC = () => {
           </h3>
           <p>
             {isTamil
-              ? 'இந்த தளம் இந்திய தேர்தல் ஆணையத்தின் வழிகாட்டுதலின் கீழ், வாக்காளர்களின் அரசியலமைப்பு உரிமைகளைப் பாதுகாக்கும் நோக்குடன் உருவாக்கப்பட்டுள்ளது. இதில் இரு தனித்தனி தளங்கள் உள்ளன: ஒன்று தேர்தல் நிர்வாக பணிகளுக்கான தேர்தல் ஆணைய தளம், மற்றொன்று பொது மக்கள் வாக்களிக்கும் தளம். இரண்டும் ஒன்றுக்கொன்று தனிமைப்படுத்தப்பட்டு செயல்படுகின்றன.'
-              : 'Developed strictly under statutory constitutional guidelines of the Election Commission of India. The architecture maintains two completely separate operational spheres: the Election Authority Portal for returning officers to administer the election lifecycle, and the Voter Portal for verified citizens to exercise franchise with total anonymity.'}
+              ? 'இந்த தளம் இந்திய தேர்தல் ஆணையத்தின் வழிகாட்டுதலின் கீழ், வாக்காளர்களின் அரசியலமைப்பு உரிமைகளைப் பாதுகாக்கும் நோக்குடன் உருவாக்கப்பட்டுள்ளது. வாக்காளர்கள் தங்கள் வாக்காளர் அடையாள அட்டை மற்றும் ஆதார் வழியாக பாதுகாப்பாகவும் ரகசியமாகவும் வாக்களிக்கும் வசதியை இது உறுதி செய்கிறது.'
+              : 'Developed strictly under statutory constitutional guidelines of the Election Commission of India. The architecture maintains an end-to-end cryptographically secured voting workflow ensuring verified citizens exercise their franchise with total privacy and anonymity.'}
           </p>
         </section>
       </main>

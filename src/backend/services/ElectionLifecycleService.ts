@@ -121,6 +121,78 @@ export class ElectionLifecycleService {
 
     this.elections.set(electionId, defaultElection);
     this.candidates.set(electionId, defaultCandidates);
+
+    // 2. Coimbatore Constituency Election ELEC-001 (for prototype validation)
+    const cbeElectionId = 'ELEC-001';
+    const cbeElection: Election = {
+      id: cbeElectionId,
+      title: 'Parliamentary General Election 2026 - Coimbatore (CBE-01)',
+      description: 'General election to elect the Member of Parliament representing CBE-01 Parliamentary Constituency.',
+      constituency: 'CBE-01',
+      state: 'Tamil Nadu',
+      type: 'PARLIAMENTARY',
+      status: 'OPEN',
+      startTime: new Date(Date.now() - 3600 * 1000).toISOString(),
+      endTime: new Date(Date.now() + 86400 * 1000 * 3).toISOString(),
+      rules: {
+        maxSelections: 1,
+        allowNOTA: true,
+        requireMFAForAuthority: false,
+        seniorAccessibilityEnabled: true,
+      },
+      languages: ['en', 'ta'],
+      totalEligibleVoters: 950000,
+      createdAt: new Date(Date.now() - 86400 * 1000 * 7).toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const cbeCandidates: Candidate[] = [
+      {
+        id: 'CAND-CBE-01',
+        electionId: cbeElectionId,
+        name: 'S. Kaliappan',
+        party: 'National Democratic Alliance (NDA)',
+        candidateType: 'Party',
+        symbol: 'Lotus',
+        photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+        constituency: 'CBE-01',
+        description: 'Advocating for industrial modern infrastructure and MSME development.',
+        information: 'Coimbatore Civic Representative and industrial consultant.',
+        status: 'ACTIVE',
+        orderNumber: 1,
+      },
+      {
+        id: 'CAND-CBE-02',
+        electionId: cbeElectionId,
+        name: 'M. Selvi',
+        party: 'United Progressive Front (UPF)',
+        candidateType: 'Party',
+        symbol: 'Rising Sun',
+        photo: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
+        constituency: 'CBE-01',
+        description: 'Championing rural education, water conservation, and healthcare.',
+        information: 'Education activist and grassroots community leader.',
+        status: 'ACTIVE',
+        orderNumber: 2,
+      },
+      {
+        id: 'CAND-CBE-03',
+        electionId: cbeElectionId,
+        name: 'NOTA (None of the Above)',
+        party: 'Independent Constitutional Option',
+        candidateType: 'Independent',
+        symbol: 'Cross Ballot Icon',
+        photo: '',
+        constituency: 'CBE-01',
+        description: 'Statutory option provided under Section 49-O & Rule 49-B of Conduct of Elections Rules.',
+        information: 'Constitutional choice indicating dissatisfaction with all candidates.',
+        status: 'ACTIVE',
+        orderNumber: 3,
+      },
+    ];
+
+    this.elections.set(cbeElectionId, cbeElection);
+    this.candidates.set(cbeElectionId, cbeCandidates);
   }
 
   public static getElections(): Election[] {

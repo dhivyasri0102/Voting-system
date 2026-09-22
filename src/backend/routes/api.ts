@@ -11,9 +11,7 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
-import { UIDAIOTPService } from '../services/UIDAIOTPService.js';
-import { UIDAIAuthenticationService } from '../services/UIDAIAuthenticationService.js';
-import { UIDAIConfiguration } from '../integrations/uidai/UIDAIConfiguration.js';
+import { VoterVerificationService } from '../services/VoterVerificationService.js';
 import { ElectoralRollService } from '../integrations/electoralRoll/ElectoralRollService.js';
 import { AnonymousCredentialService } from '../services/AnonymousCredentialService.js';
 import { BallotService } from '../services/BallotService.js';
@@ -164,6 +162,7 @@ router.get('/admin/stats', (req: Request, res: Response) => {
       currentElectionStatus: elections[0]?.status || 'DRAFT',
     },
     systemStatus: systemHealth,
+    verificationMonitor: VoterVerificationService.getStats(),
   });
 });
 
@@ -549,226 +548,105 @@ router.get('/voter/status/:voterId/:electionId', (req: Request, res: Response) =
 });
 
 // ==========================================
-// 7. UIDAI / AADHAAR AUTHENTICATION ENDPOINTS
+// 7. LOCAL VOTER VERIFICATION & OTP ENDPOINTS
 // ==========================================
 
 /**
- * POST /api/v1/verification/aadhaar/otp/request/
- * POST /api/v1/verification/aadhaar/otp/request
- * Requests an OTP through the configured UIDAI integration.
- */
-router.post(['/verification/aadhaar/otp/request', '/verification/aadhaar/otp/request/'], async (req: Request, res: Response) => {
-  try {
-    SecurityMonitoringService.incrementMetric('otpRequestsTotal');
-    const { aadhaar_number, user_consent } = req.body;
-    const ip = req.ip || '127.0.0.1';
-
-    const result = await UIDAIOTPService.requestOTP({
-      aadhaarNumber: aadhaar_number,
-      userConsent: user_consent === true,
-      ipAddress: ip,
-    });
-
-    if (!result.success) {
-      SecurityMonitoringService.incrementMetric('otpRequestsFailed');
-      return res.status(result.statusCode).json({
-        success: false,
-        status: result.status,
-        message: result.message,
-        error_code: result.error_code,
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      status: result.status,
-      transaction_id: result.transaction_id,
-      message: result.message,
-    });
-  } catch (err: any) {
-    SecurityMonitoringService.incrementMetric('otpRequestsFailed');
-    return res.status(500).json({
-      success: false,
-      status: 'SYSTEM_ERROR',
-      message: 'Internal error processing identity verification request.',
-    });
-  }
-});
-
-/**
- * POST /api/v1/verification/aadhaar/otp/verify/
- * POST /api/v1/verification/aadhaar/otp/verify
- * Submits OTP for verification against configured UIDAI gateway.
- */
-router.post(['/verification/aadhaar/otp/verify', '/verification/aadhaar/otp/verify/'], async (req: Request, res: Response) => {
-  try {
-    const { transaction_id, otp, voter_id } = req.body;
-    const ip = req.ip || '127.0.0.1';
-
-    const result = await UIDAIAuthenticationService.verifyOTP({
-      transactionId: transaction_id,
-      otp,
-      voterId: voter_id,
-      ipAddress: ip,
-    });
-
-    if (!result.success) {
-      return res.status(result.statusCode).json({
-        success: false,
-        status: result.status,
-        message: result.message,
-        error_code: result.error_code,
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      status: result.status,
-      transaction_id: result.transaction_id,
-      authentication_reference: result.authentication_reference,
-      authenticated_at: result.authenticated_at,
-      message: result.message,
-    });
-  } catch (err: any) {
-    return res.status(500).json({
-      success: false,
-      status: 'AUTHENTICATION_FAILED',
-      message: 'Failed to process identity authentication.',
-      error_code: 'ERR_SYSTEM_FAILURE',
-    });
-  }
-});
-
-/**
- * GET /api/v1/verification/uidai/status
- */
-router.get('/verification/uidai/status', (req: Request, res: Response) => {
-  const isConfigured = UIDAIOTPService.isConfigured();
-  const config = UIDAIOTPService.getConfig();
-
-  res.json({
-    environment: config.environment,
-    enabled: config.enabled,
-    isConfigured,
-    status: isConfigured ? 'CONFIGURED' : 'UNCONFIGURED',
-    statusMessage: isConfigured
-      ? `UIDAI Official ${config.environment.toUpperCase()} Gateway Configured.`
-      : 'UIDAI Aadhaar authentication is not configured in this environment.',
-    authEndpoint: config.authUrl ? 'CONFIGURED' : 'NOT_SET',
-    otpEndpoint: config.otpUrl ? 'CONFIGURED' : 'NOT_SET',
-  });
-});
-
-/**
- * POST /api/v1/verification/uidai/environment
- * Administrative or Developer environment configuration toggle.
- * Enables switching to official developer/test environment without inventing credentials.
- */
-router.post('/verification/uidai/environment', (req: Request, res: Response) => {
-  const { mode } = req.body;
-
-  if (mode === 'developer') {
-    UIDAIOTPService.setEnvironment({
-      environment: 'developer',
-      enabled: true,
-      auaCode: 'PUBLIC-DEV-AUA',
-      subAuaCode: 'PUBLIC-SUB-AUA',
-      licenseKey: 'PUBLIC-DEV-LK-2026',
-      otpUrl: 'https://developer.uidai.gov.in/otp/2.5',
-      authUrl: 'https://developer.uidai.gov.in/auth/2.5',
-      timeoutSeconds: 10,
-    });
-    return res.json({
-      success: true,
-      message: 'Configured official UIDAI developer/test environment (developer.uidai.gov.in 2.5).',
-      config: UIDAIOTPService.getConfig(),
-    });
-  }
-
-  // Reset to unconfigured
-  UIDAIOTPService.setEnvironment({
-    environment: 'unconfigured',
-    enabled: false,
-    auaCode: '',
-    licenseKey: '',
-    otpUrl: '',
-    authUrl: '',
-  });
-
-  return res.json({
-    success: true,
-    message: 'Reset UIDAI integration status to UNCONFIGURED.',
-    config: UIDAIOTPService.getConfig(),
-  });
-});
-
-/**
- * GET /api/v1/verification/electoral-roll/status
- */
-router.get('/verification/electoral-roll/status', (req: Request, res: Response) => {
-  res.json({
-    environment: ElectoralRollService.getEnvironment(),
-    isConfigured: ElectoralRollService.isConfigured(),
-    statusMessage: ElectoralRollService.getStatusMessage(),
-  });
-});
-
-/**
+ * POST /api/v1/verification/voter-id/
  * POST /api/v1/verification/voter-id
- * Verifies voter registration status against configured electoral roll.
+ * Step 1: Verifies voter ID against the local mock voter database.
  */
-router.post('/verification/voter-id', async (req: Request, res: Response) => {
-  try {
-    const { voter_id, election_id, simulate_local_dev } = req.body;
+router.post(['/verification/voter-id', '/verification/voter-id/'], (req: Request, res: Response) => {
+  const { voter_id } = req.body;
+  const result = VoterVerificationService.verifyVoterId(voter_id);
 
-    if (!voter_id) {
-      return res.status(400).json({
-        status: 'BAD_REQUEST',
-        message: 'Voter ID (EPIC) is required.',
-      });
-    }
-
-    const election = election_id ? ElectionLifecycleService.getElectionById(election_id) : undefined;
-    const lookup = await ElectoralRollService.verifyVoterId(voter_id, election?.constituency);
-
-    if (lookup.status === 'UNCONFIGURED') {
-      if (simulate_local_dev) {
-        return res.status(200).json({
-          status: 'VERIFIED',
-          isSimulatedLocalDev: true,
-          message: 'Verified against local development test roll (Simulation for offline local testing).',
-          record: {
-            voterId: voter_id.trim().toUpperCase(),
-            fullNameMasked: 'S***** K*****',
-            constituency: election?.constituency || 'Central Chennai (Constituency No. 04)',
-            state: 'Tamil Nadu',
-            isRegistered: true,
-            hasVoted: false,
-          },
-        });
-      }
-      return res.status(503).json(lookup);
-    }
-
-    if (lookup.status === 'UNAVAILABLE') {
-      return res.status(503).json(lookup);
-    }
-
-    if (lookup.status === 'NOT_FOUND') {
-      return res.status(404).json(lookup);
-    }
-
-    if (lookup.status === 'INELIGIBLE_ALREADY_VOTED') {
-      return res.status(409).json(lookup);
-    }
-
-    return res.status(200).json(lookup);
-  } catch (err: any) {
-    return res.status(500).json({
-      status: 'ERROR',
-      message: 'Internal error communicating with Electoral Roll service.',
-    });
+  if (!result.verified) {
+    const statusCode = result.status === 'INACTIVE' ? 403 : 404;
+    return res.status(statusCode).json(result);
   }
+
+  return res.status(200).json(result);
+});
+
+/**
+ * POST /api/v1/verification/otp/start/
+ * POST /api/v1/verification/otp/start
+ * Step 2: Generates a secure 6-digit OTP and logs it to the developer console.
+ */
+router.post(['/verification/otp/start', '/verification/otp/start/'], (req: Request, res: Response) => {
+  const { voter_id } = req.body;
+  const result = VoterVerificationService.startOtp(voter_id);
+
+  if (!result.success) {
+    const statusCode = result.cooldown_seconds ? 429 : 400;
+    return res.status(statusCode).json(result);
+  }
+
+  return res.status(200).json(result);
+});
+
+/**
+ * POST /api/v1/verification/otp/verify/
+ * POST /api/v1/verification/otp/verify
+ * Step 3: Verifies the 6-digit OTP entered by the voter.
+ */
+router.post(['/verification/otp/verify', '/verification/otp/verify/'], (req: Request, res: Response) => {
+  const { verification_id, otp } = req.body;
+  const result = VoterVerificationService.verifyOtp(verification_id, otp);
+
+  if (!result.verified) {
+    const statusCode = result.blocked ? 429 : 400;
+    return res.status(statusCode).json(result);
+  }
+
+  return res.status(200).json(result);
+});
+
+/**
+ * POST /api/v1/verification/eligibility/
+ * POST /api/v1/verification/eligibility
+ * Step 4: Performs statutory election eligibility check.
+ */
+router.post(['/verification/eligibility', '/verification/eligibility/'], (req: Request, res: Response) => {
+  const { voter_id, election_id } = req.body;
+  const result = VoterVerificationService.checkEligibility(voter_id, election_id);
+
+  if (!result.eligible) {
+    let statusCode = 400;
+    if (result.already_voted) statusCode = 409;
+    else if (!result.constituency_match) statusCode = 403;
+    return res.status(statusCode).json(result);
+  }
+
+  return res.status(200).json(result);
+});
+
+/**
+ * POST /api/v1/verification/credential/
+ * POST /api/v1/verification/credential
+ * Step 5: Issues an anonymous single-use voting authorization credential.
+ */
+router.post(['/verification/credential', '/verification/credential/'], (req: Request, res: Response) => {
+  const { voter_id, election_id } = req.body;
+  const result = VoterVerificationService.issueCredential({
+    voterId: voter_id,
+    electionId: election_id,
+  });
+
+  if (!result.authorized) {
+    return res.status(400).json(result);
+  }
+
+  return res.status(200).json(result);
+});
+
+/**
+ * GET /api/v1/verification/stats/
+ * GET /api/v1/verification/stats
+ * Provides verification monitor statistics for administrative dashboard.
+ */
+router.get(['/verification/stats', '/verification/stats/'], (req: Request, res: Response) => {
+  return res.json(VoterVerificationService.getStats());
 });
 
 // ==========================================

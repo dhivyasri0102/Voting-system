@@ -11,15 +11,22 @@ export const AdminLayout: React.FC = () => {
   const location = useLocation();
   const { adminSession, isAdminAuthenticated, logoutAdmin } = useAuth();
 
-  // Route protection
-  if (!isAdminAuthenticated || !adminSession) {
-    navigate('/admin/login', { replace: true });
+  const isAuth = isAdminAuthenticated && localStorage.getItem('adminAuthenticated') === 'true';
+
+  // Route protection: redirect directly to /admin if unauthenticated
+  React.useEffect(() => {
+    if (!isAuth || !adminSession) {
+      navigate('/admin', { replace: true });
+    }
+  }, [isAuth, adminSession, navigate]);
+
+  if (!isAuth || !adminSession) {
     return null;
   }
 
   const handleLogout = () => {
     logoutAdmin();
-    navigate('/admin/login');
+    navigate('/admin', { replace: true });
   };
 
   const navItems = [
@@ -93,10 +100,11 @@ export const AdminLayout: React.FC = () => {
         <div className="p-3 border-t border-slate-800">
           <button
             onClick={handleLogout}
+            id="admin-sidebar-logout-btn"
             className="w-full flex items-center space-x-2 px-3 py-2 rounded-xl text-xs font-semibold text-red-400 hover:text-red-300 hover:bg-red-950/30 transition-colors"
           >
             <LogOut className="w-4 h-4" />
-            <span>Sign Out Authority</span>
+            <span>Admin Logout</span>
           </button>
         </div>
       </aside>
