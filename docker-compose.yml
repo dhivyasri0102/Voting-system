@@ -1,0 +1,164 @@
+version: '3.8'
+
+services:
+  # Web Application (React + Node.js Full-Stack API Gateway)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: evoting-core-app
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=postgresql://election_admin:SecureElectionPass2026!@postgres:5432/evoting_db
+      - REDIS_URL=redis://:RedisSecurePass2026!@redis:6379/0
+      # External Government API integrations explicitly UNCONFIGURED by default
+      - UIDAI_ENVIRONMENT=unconfigured
+      - UIDAI_ENABLE=false
+      - ELECTORAL_ROLL_ENVIRONMENT=unconfigured
+      # Hyperledger Fabric Local Configuration
+      - FABRIC_CHANNEL=election-channel
+      - FABRIC_PEER_ENDPOINT=fabric-peer:7051
+      - FABRIC_MSPID=ElectionAuthorityMSP
+      - FABRIC_CERT_PATH=/app/blockchain/crypto-material/peerOrganizations/election-authority.gov/peers/peer0.election-authority.gov/tls/server.crt
+      - FABRIC_KEY_PATH=/app/blockchain/crypto-material/peerOrganizations/election-authority.gov/peers/peer0.election-authority.gov/tls/server.key
+      - FABRIC_CA_CERT=/app/blockchain/crypto-material/peerOrganizations/election-authority.gov/ca/ca.election-authority.gov-cert.pem
+      # JWT & Admin MFA Secrets (auto-generated if empty)
+      - JWT_SECRET=${JWT_SECRET:-}
+      - ADMIN_MFA_SECRET=${ADMIN_MFA_SECRET:-}
+    volumes:
+      - ./blockchain/crypto-material:/app/blockchain/crypto-material
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      fabric-peer:
+        condition: service_started
+    networks:
+      - election-network
+
+  # Relational Store for Identity & State
+  postgres:
+    image: postgres:15-alpine
+    container_name: evoting-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: evoting_db
+      POSTGRES_USER: election_admin
+      POSTGRES_PASSWORD: SecureElectionPass2026!
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U election_admin -d evoting_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - election-network
+
+  # Redis for Ephemeral State, Nonce Storage & Rate Limiting
+  redis:
+    image: redis:7-alpine
+    container_name: evoting-redis
+    restart: always
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "RedisSecurePass2026!"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "RedisSecurePass2026!", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - redis_data:/data
+    networks:
+      - election-network
+
+  # Hyperledger Fabric Certificate Authority (Local Development)
+  fabric-ca:
+    image: hyperledger/fabric-ca:1.5.7
+    container_name: ca.election.gov
+    environment:
+      - FABRIC_CA_HOME=/etc/hyperledger/fabric-ca-server
+      - FABRIC_CA_SERVER_CA_NAME=ca-election-gov
+      - FABRIC_CA_SERVER_TLS_ENABLED=true
+    ports:
+      - "7054:7054"
+    volumes:
+      - fabric_ca:/etc/hyperledger/fabric-ca-server
+      - ./blockchain/crypto-material:/etc/hyperledger/crypto-material
+    networks:
+      - election-network
+
+  # Hyperledger Fabric Peer Node (Election Authority)
+  fabric-peer:
+    image: hyperledger/fabric-peer:2.5.4
+    container_name: peer0.election-authority.gov
+    environment:
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_PEER_ID=peer0.election-authority.gov
+      - CORE_PEER_ADDRESS=fabric-peer:7051
+      - CORE_PEER_LISTENADDRESS=0.0.0.0:7051
+      - CORE_PEER_CHAINCODEADDRESS=fabric-peer:7052
+      - CORE_PEER_CHAINCODELISTENADDRESS=0.0.0.0:7052
+      - CORE_PEER_LOCALMSPID=ElectionAuthorityMSP
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/crypto-material/peerOrganizations/election-authority.gov/peers/peer0.election-authority.gov/msp
+      - CORE_PEER_TLS_ENABLED=true
+      - CORE_PEER_TLS_CERT_FILE=/etc/hyperledger/crypto-material/peerOrganizations/election-authority.gov/peers/peer0.election-authority.gov/tls/server.crt
+      - CORE_PEER_TLS_KEY_FILE=/etc/hyperledger/crypto-material/peerOrganizations/election-authority.gov/peers/peer0.election-authority.gov/tls/server.key
+      - CORE_PEER_TLS_ROOTCERT_FILE=/etc/hyperledger/crypto-material/peerOrganizations/election-authority.gov/ca/ca.election-authority.gov-cert.pem
+    ports:
+      - "7051:7051"
+    volumes:
+      - ./blockchain/crypto-material:/etc/hyperledger/crypto-material
+    networks:
+      - election-network
+
+  # Hyperledger Fabric Raft Orderer Node
+  fabric-orderer:
+    image: hyperledger/fabric-orderer:2.5.4
+    container_name: orderer.election.gov
+    environment:
+      - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+      - ORDERER_GENERAL_LISTENPORT=7050
+      - ORDERER_GENERAL_GENESISMETHOD=file
+      - ORDERER_GENERAL_GENESISFILE=/var/hyperledger/orderer/orderer.genesis.block
+      - ORDERER_GENERAL_LOCALMSPID=OrdererMSP
+      - ORDERER_GENERAL_TLS_ENABLED=true
+    ports:
+      - "7050:7050"
+    networks:
+      - election-network
+
+  # Prometheus Metrics Collector
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: evoting-prometheus
+    volumes:
+      - ./infra/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - election-network
+
+  # Grafana Monitoring Dashboard
+  grafana:
+    image: grafana/grafana:10.2.2
+    container_name: evoting-grafana
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - election-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  fabric_ca:
+
+networks:
+  election-network:
+    driver: bridge
