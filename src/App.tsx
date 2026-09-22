@@ -30,23 +30,24 @@ export default function App() {
           {/* 1. Landing Page */}
           <Route path="/" element={<LandingPage />} />
 
-          {/* 2. Admin Authentication */}
-          <Route path="/admin/login" element={<AdminLogin />} />
+          {/* 2. Hidden Admin Entry Point */}
+          <Route path="/admin" element={<AdminLogin />} />
+          <Route path="/admin/login" element={<Navigate to="/admin" replace />} />
 
           {/* 3. Admin Protected Portal */}
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<Navigate to="/admin/dashboard" replace />} />
-            <Route path="dashboard" element={<AdminDashboard />} />
-            <Route path="elections" element={<AdminDashboard />} />
-            <Route path="elections/create" element={<AdminElectionCreate />} />
-            <Route path="elections/:electionId/candidates" element={<AdminCandidateManagement />} />
-            <Route path="results/:electionId" element={<AdminResultsDashboard />} />
-            <Route path="audit" element={<AdminAuditDashboard />} />
-            <Route path="security" element={<AdminSystemHealth />} />
-            <Route path="system" element={<AdminSystemHealth />} />
+          <Route element={<AdminLayout />}>
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/elections" element={<AdminDashboard />} />
+            <Route path="/admin/elections/create" element={<AdminElectionCreate />} />
+            <Route path="/admin/elections/:electionId/candidates" element={<AdminCandidateManagement />} />
+            <Route path="/admin/results/:electionId" element={<AdminResultsDashboard />} />
+            <Route path="/admin/audit" element={<AdminAuditDashboard />} />
+            <Route path="/admin/security" element={<AdminSystemHealth />} />
+            <Route path="/admin/system" element={<AdminSystemHealth />} />
           </Route>
 
           {/* 4. Voter Authentication */}
+          <Route path="/login" element={<Navigate to="/voter/login" replace />} />
           <Route path="/voter/login" element={<VoterLogin />} />
 
           {/* 5. Voter Protected Portal */}

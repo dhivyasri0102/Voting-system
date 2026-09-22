@@ -3,14 +3,14 @@ import { useNavigate, Link } from 'react-router-dom';
 import { 
   BarChart3, Users, Vote, ShieldCheck, AlertTriangle, CheckCircle2, 
   RefreshCw, Play, Square, Clock, PlusCircle, ArrowRight, Server, Database,
-  Cpu, FileText, CheckCircle
+  Cpu, FileText, CheckCircle, LogOut
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.js';
 import { Election, ElectionStatus } from '../../types/index.js';
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { adminSession } = useAuth();
+  const { adminSession, logoutAdmin } = useAuth();
 
   const [stats, setStats] = useState<any>(null);
   const [elections, setElections] = useState<Election[]>([]);
@@ -155,6 +155,18 @@ export const AdminDashboard: React.FC = () => {
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
             <span>Refresh</span>
+          </button>
+
+          <button
+            id="admin-dashboard-logout-btn"
+            onClick={() => {
+              logoutAdmin();
+              navigate('/admin', { replace: true });
+            }}
+            className="px-3.5 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold flex items-center space-x-1.5 shadow-sm transition-colors"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Admin Logout</span>
           </button>
         </div>
       </div>

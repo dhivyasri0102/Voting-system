@@ -586,16 +586,6 @@ export const VoterLogin: React.FC = () => {
               </button>
             </div>
           )}
-
-          {/* Footer Navigation Link */}
-          <div className="pt-3 border-t border-slate-100 text-center">
-            <Link
-              to="/admin/login"
-              className="text-xs text-slate-500 hover:text-slate-800"
-            >
-              Election Official or Returning Officer? Go to Admin Portal →
-            </Link>
-          </div>
         </div>
       </div>
     </div>
