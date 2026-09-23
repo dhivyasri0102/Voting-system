@@ -13,14 +13,14 @@ export const AdminAuditDashboard: React.FC = () => {
   const fetchLogs = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/v1/admin/audit/logs', {
+      const res = await fetch('/api/v1/admin/audit', {
         headers: {
           Authorization: `Bearer ${adminSession?.token}`,
         },
       });
       if (res.ok) {
         const data = await res.json();
-        setLogs(data.logs || []);
+        setLogs(data.adminAuditEvents || []);
       }
     } catch (err) {
       console.error('Failed to load audit logs', err);
@@ -53,7 +53,7 @@ export const AdminAuditDashboard: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200 gap-4">
         <div>
           <div className="flex items-center space-x-2">
-            <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-mono text-xs font-bold">
+            <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-mono text-xs font-bold">
               ECI AUDIT TRAIL
             </span>
             <span className="text-xs text-slate-500 font-mono">
@@ -100,8 +100,8 @@ export const AdminAuditDashboard: React.FC = () => {
         </div>
       </div>
 
-      <div className="p-3.5 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-900 flex items-center space-x-2">
-        <Lock className="w-4 h-4 text-blue-700 shrink-0" />
+      <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900 flex items-center space-x-2">
+        <Lock className="w-4 h-4 text-emerald-700 shrink-0" />
         <span>
           <strong>Zero Linkage Guarantee:</strong> Audit records document administrative administrative commands and system operations. Under constitutional privacy protections, individual voter ballot choices are never recorded or inspectable.
         </span>

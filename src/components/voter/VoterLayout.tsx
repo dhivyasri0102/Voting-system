@@ -192,7 +192,7 @@ export const VoterLayout: React.FC = () => {
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
                 walletAddress
                   ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
+                  : 'bg-emerald-600 text-white hover:bg-emerald-700'
               }`}
             >
               {walletAddress

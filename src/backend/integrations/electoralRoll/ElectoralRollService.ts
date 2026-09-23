@@ -127,11 +127,13 @@ export class ElectoralRollService {
    * Atomically mark voter ID as having voted in identity registry.
    */
   public static markAsVoted(voterId: string): void {
-    this.votedRegistry.add(voterId.trim().toUpperCase());
+    const clean = voterId.trim().toUpperCase();
+    this.votedRegistry.add(clean);
   }
 
   public static hasVoted(voterId: string): boolean {
-    return this.votedRegistry.has(voterId.trim().toUpperCase());
+    const clean = voterId.trim().toUpperCase();
+    return this.votedRegistry.has(clean);
   }
 
   public static getEnvironment(): string {

@@ -81,11 +81,11 @@ export class AuditService {
     });
 
     // Check 5: Zero-Knowledge Identity Isolation Audit
-    // Verifies that stored ballot records do not contain Voter ID, Aadhaar, Name, or IP addresses
+    // Verifies that stored ballot records do not contain voter identity, name, or IP addresses
     let identityLeakageFound = false;
     for (const b of storedBallots) {
       const keys = Object.keys(b);
-      if (keys.includes('voterId') || keys.includes('aadhaar') || keys.includes('name')) {
+      if (keys.includes('voterId') || keys.includes('name') || keys.includes('ipAddress')) {
         identityLeakageFound = true;
         break;
       }

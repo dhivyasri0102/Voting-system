@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  ShieldCheck, Lock, Users, Vote, FileCheck, CheckCircle2, 
-  ExternalLink, Globe, Eye, Volume2, ArrowRight, ShieldAlert, Cpu
+import {
+  ShieldCheck, Lock, Vote, FileCheck, CheckCircle2,
+  Globe, Eye, Volume2, ArrowRight, ShieldAlert, Zap,
+  Users, BarChart3
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.js';
 import { Election } from '../types/index.js';
@@ -32,19 +33,62 @@ export const LandingPage: React.FC = () => {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = isTamil ? 'ta-IN' : 'en-IN';
+      utterance.rate = 0.9;
       window.speechSynthesis.speak(utterance);
     }
   };
 
+  const features = [
+    {
+      icon: ShieldCheck,
+      color: 'text-green-700',
+      bg: 'bg-green-50 border-green-200',
+      title: isTamil ? 'மாற்ற முடியாத பதிவு' : 'Immutable Ledger',
+      desc: isTamil
+        ? 'ஒவ்வொரு வாக்கும் SHA-256 ஹாஷிங் மூலம் மெர்கில் மரத்தில் பாதுகாக்கப்படுகிறது.'
+        : 'Every vote is cryptographically anchored via Merkle Trees on Hyperledger Fabric nodes.',
+    },
+    {
+      icon: Lock,
+      color: 'text-amber-700',
+      bg: 'bg-amber-50 border-amber-200',
+      title: isTamil ? 'இரட்டை வாக்கு தடுப்பு' : 'One-Vote Enforcement',
+      desc: isTamil
+        ? 'ஒரே முறை பயன்படும் டோக்கன் வாக்குப்பதிவின் போது உடனடியாக முடக்கப்படுகிறது.'
+        : 'Atomic single-use credentials guarantee zero duplicate voting.',
+    },
+    {
+      icon: Eye,
+      color: 'text-purple-700',
+      bg: 'bg-purple-50 border-purple-200',
+      title: isTamil ? 'முழுமையான ரகசியம்' : 'Complete Ballot Secrecy',
+      desc: isTamil
+        ? 'வாக்காளர் அடையாளம் வாக்குச்சீட்டில் ஒருபோதும் இணைக்கப்படாது.'
+        : 'Zero linkage between electoral identity and candidate choice — mathematically guaranteed.',
+    },
+    {
+      icon: BarChart3,
+      color: 'text-emerald-700',
+      bg: 'bg-emerald-50 border-emerald-200',
+      title: isTamil ? 'வெளிப்படையான தணிக்கை' : 'Independent Audit',
+      desc: isTamil
+        ? 'CAG தணிக்கையாளர்கள் வாக்கு ரகசியத்தை மீறாமல் கணித ரீதியாக முடிவுகளை சரிபார்க்கலாம்.'
+        : 'CAG auditors verify mathematical tally proofs without decrypting any individual ballot.',
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+    <div className="min-h-screen bg-stone-50 flex flex-col font-sans">
+
       {/* Top Accessibility & Language Bar */}
-      <div className="bg-slate-900 text-slate-200 border-b border-slate-800 text-xs py-2 px-4">
+      <div className="bg-stone-900 text-stone-200 border-b border-stone-800 text-xs py-2 px-4">
         <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center space-x-2">
-            <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="font-semibold tracking-wider text-slate-300 uppercase">
-              {isTamil ? 'இந்திய தேர்தல் ஆணையம் • அதிகாரப்பூர்வ தேசிய தளம்' : 'Election Commission of India • Official National E-Voting Portal'}
+            <span className="inline-block w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+            <span className="font-semibold tracking-wider text-stone-300 uppercase text-[11px]">
+              {isTamil
+                ? 'இந்திய தேர்தல் ஆணையம் • அதிகாரப்பூர்வ தேசிய தளம்'
+                : 'Election Commission of India • Official National E-Voting Portal'}
             </span>
           </div>
 
@@ -77,20 +121,20 @@ export const LandingPage: React.FC = () => {
               }
               className={`px-2 py-0.5 rounded text-[11px] font-medium border ${
                 accessibility.highContrast
-                  ? 'bg-amber-400 text-slate-950 border-amber-300 font-bold'
-                  : 'border-slate-700 hover:border-slate-500'
+                  ? 'bg-amber-400 text-stone-950 border-amber-300 font-bold'
+                  : 'border-stone-700 hover:border-stone-500'
               }`}
             >
               {isTamil ? 'உயர் மாறுபாடு' : 'High Contrast'}
             </button>
 
             {/* Font Size controls */}
-            <div className="flex items-center space-x-1 border-l border-slate-700 pl-2">
+            <div className="flex items-center space-x-1 border-l border-stone-700 pl-2">
               <button
                 id="font-normal-btn"
                 onClick={() => setAccessibility((prev) => ({ ...prev, fontSize: 'normal' }))}
                 className={`px-1.5 py-0.5 rounded text-[11px] ${
-                  accessibility.fontSize === 'normal' ? 'bg-blue-600 text-white' : 'hover:text-white'
+                  accessibility.fontSize === 'normal' ? 'bg-green-700 text-white' : 'hover:text-white'
                 }`}
               >
                 A
@@ -99,7 +143,7 @@ export const LandingPage: React.FC = () => {
                 id="font-large-btn"
                 onClick={() => setAccessibility((prev) => ({ ...prev, fontSize: 'large' }))}
                 className={`px-1.5 py-0.5 rounded text-[11px] font-bold ${
-                  accessibility.fontSize === 'large' ? 'bg-blue-600 text-white' : 'hover:text-white'
+                  accessibility.fontSize === 'large' ? 'bg-green-700 text-white' : 'hover:text-white'
                 }`}
               >
                 A+
@@ -108,7 +152,7 @@ export const LandingPage: React.FC = () => {
                 id="font-xl-btn"
                 onClick={() => setAccessibility((prev) => ({ ...prev, fontSize: 'extra-large' }))}
                 className={`px-1.5 py-0.5 rounded text-[11px] font-black ${
-                  accessibility.fontSize === 'extra-large' ? 'bg-blue-600 text-white' : 'hover:text-white'
+                  accessibility.fontSize === 'extra-large' ? 'bg-green-700 text-white' : 'hover:text-white'
                 }`}
               >
                 A++
@@ -119,7 +163,7 @@ export const LandingPage: React.FC = () => {
             <button
               id="lang-switch-btn"
               onClick={toggleLanguage}
-              className="flex items-center space-x-1 px-2.5 py-0.5 rounded bg-blue-700 hover:bg-blue-600 text-white font-semibold transition-colors"
+              className="flex items-center space-x-1 px-2.5 py-0.5 rounded bg-amber-600 hover:bg-amber-500 text-white font-semibold transition-colors"
             >
               <Globe className="w-3.5 h-3.5" />
               <span>{isTamil ? 'English' : 'தமிழ்'}</span>
@@ -129,10 +173,19 @@ export const LandingPage: React.FC = () => {
       </div>
 
       {/* Hero Header */}
-      <header className="bg-gradient-to-b from-slate-900 to-slate-950 text-white border-b border-slate-800 shadow-md">
-        <div className="max-w-6xl mx-auto px-4 py-8 sm:py-12 text-center">
-          <div className="inline-flex items-center justify-center p-3 bg-blue-900/40 rounded-2xl border border-blue-500/30 mb-4">
-            <ShieldCheck className="w-10 h-10 text-blue-400" />
+      <header className="bg-gradient-to-br from-stone-900 via-stone-800 to-stone-900 text-white border-b border-stone-700 shadow-lg">
+        <div className="max-w-6xl mx-auto px-4 py-10 sm:py-14 text-center">
+          {/* India tricolour accent strip */}
+          <div className="flex justify-center mb-6">
+            <div className="flex rounded-full overflow-hidden shadow-lg border border-stone-700">
+              <div className="w-8 h-1.5 bg-amber-500" />
+              <div className="w-8 h-1.5 bg-white/90" />
+              <div className="w-8 h-1.5 bg-green-600" />
+            </div>
+          </div>
+
+          <div className="inline-flex items-center justify-center p-3 bg-green-900/30 rounded-2xl border border-green-500/20 mb-5">
+            <ShieldCheck className="w-10 h-10 text-green-400" />
           </div>
 
           <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight max-w-3xl mx-auto leading-snug">
@@ -140,44 +193,54 @@ export const LandingPage: React.FC = () => {
               ? 'பிளாக்செயின் அடிப்படையிலான தானியங்கி மற்றும் தனியுரிமை பாதுகாக்கப்பட்ட மின்னணு வாக்குப்பதிவு அமைப்பு'
               : 'Blockchain-Based Automated and Privacy-Preserving E-Voting System'}
           </h1>
-          <p className="mt-3 text-sm sm:text-base text-slate-300 max-w-2xl mx-auto">
+          <p className="mt-3 text-sm sm:text-base text-stone-300 max-w-2xl mx-auto">
             {isTamil
               ? 'அங்கீகரிக்கப்பட்ட குடிமக்களுக்கான ரகசிய வாக்குரிமை மற்றும் சுயாதீன கணக்காய்வுத்திறன் கொண்ட தேசிய வாக்குப்பதிவு தளம்.'
               : 'Cryptographically verified citizen suffrage featuring zero voter-candidate linkage and end-to-end immutability.'}
           </p>
 
+          {/* System Health Indicator */}
+          {systemHealth && (
+            <div className="mt-4 inline-flex items-center space-x-2 px-3 py-1.5 rounded-full bg-green-900/40 border border-green-500/30 text-xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+              <span className="text-green-300 font-medium">
+                {isTamil ? 'அமைப்பு செயல்படுகிறது' : 'System Operational'}
+              </span>
+            </div>
+          )}
+
           {/* VOTER PORTAL ENTRY CARD */}
-          <div className="mt-8 max-w-xl mx-auto text-left">
-            <div className="bg-slate-800/90 border border-slate-700 rounded-2xl p-6 sm:p-8 flex flex-col justify-between hover:border-emerald-400 transition-all shadow-xl hover:shadow-emerald-500/10 group">
+          <div className="mt-8 max-w-md mx-auto text-left">
+            <div className="bg-stone-800/90 border border-stone-700 rounded-2xl p-6 sm:p-8 flex flex-col justify-between hover:border-green-400/60 transition-all shadow-2xl hover:shadow-green-500/10 group">
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 rounded-xl bg-emerald-600/20 text-emerald-400 border border-emerald-500/30">
+                  <div className="p-2.5 rounded-xl bg-green-700/20 text-green-400 border border-green-600/30">
                     <Vote className="w-7 h-7" />
                   </div>
-                  <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded bg-emerald-950 text-emerald-300 border border-emerald-800">
+                  <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-green-950/60 text-green-300 border border-green-800">
                     {isTamil ? 'வாக்காளர் தளம்' : 'Citizen Voter'}
                   </span>
                 </div>
                 <h2 className="text-xl font-bold text-white">
                   {isTamil ? 'வாக்காளர் உள்நுழைவு' : 'Voter Login'}
                 </h2>
-                <p className="text-xs sm:text-sm text-slate-300 mt-2 leading-relaxed">
+                <p className="text-xs sm:text-sm text-stone-300 mt-2 leading-relaxed">
                   {isTamil
-                    ? 'வாக்காளர் அடையாள அட்டை (EPIC) மற்றும் ஆதார் OTP வழியாக அங்கீகரித்து பாதுகாப்பாக வாக்களிக்கும் பொதுத்தளம்.'
-                    : 'Citizen suffrage portal. Authenticate with Voter ID (EPIC) and UIDAI OTP to receive an isolated anonymous voting credential.'}
+                    ? 'வாக்காளர் அடையாள அட்டை (EPIC) மற்றும் மொபைல் OTP வழியாக அங்கீகரித்து பாதுகாப்பாக வாக்களிக்கும் பொதுத்தளம்.'
+                    : 'Authenticate with Voter ID (EPIC) and Mobile OTP to receive an isolated anonymous voting credential.'}
                 </p>
-                <div className="mt-5 space-y-2 text-xs text-slate-300">
+                <div className="mt-5 space-y-2 text-xs text-stone-300">
                   <div className="flex items-center space-x-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>Single-use anonymous token</span>
+                    <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
+                    <span>{isTamil ? 'ஒரே முறை அநாமதேய டோக்கன்' : 'Single-use anonymous token'}</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>Zero linkage between identity & ballot</span>
+                    <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
+                    <span>{isTamil ? 'அடையாளம் & வாக்கு பிரிக்கப்பட்டுள்ளது' : 'Zero linkage between identity & ballot'}</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>Immutable cryptographic ledger verification</span>
+                    <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
+                    <span>{isTamil ? 'மொபைல் OTP சரிபார்ப்பு' : 'Mobile OTP verification (Free tier)'}</span>
                   </div>
                 </div>
               </div>
@@ -185,7 +248,7 @@ export const LandingPage: React.FC = () => {
               <button
                 id="voter-login-btn"
                 onClick={() => navigate('/voter/login')}
-                className="mt-6 w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold flex items-center justify-center space-x-2 transition-all shadow-md group-hover:bg-emerald-500"
+                className="mt-6 w-full py-3.5 px-4 rounded-xl bg-green-600 hover:bg-green-500 text-white text-sm font-bold flex items-center justify-center space-x-2 transition-all shadow-md group-hover:bg-green-500"
               >
                 <span>{isTamil ? 'வாக்காளர் உள்நுழைவு' : 'Voter Login'}</span>
                 <ArrowRight className="w-4 h-4" />
@@ -196,171 +259,135 @@ export const LandingPage: React.FC = () => {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-10 space-y-12">
+      <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-10 space-y-10">
+
         {/* Live Election Status */}
-        <section className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-2">
+        <section className="bg-white rounded-2xl border border-stone-200 p-6 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-stone-100 gap-2">
             <div>
-              <h3 className="text-base font-bold text-slate-900 flex items-center space-x-2">
-                <FileCheck className="w-5 h-5 text-blue-600" />
+              <h3 className="text-base font-bold text-stone-900 flex items-center space-x-2">
+                <FileCheck className="w-5 h-5 text-green-600" />
                 <span>{isTamil ? 'தற்போதைய தேர்தல் நிலை' : 'Active Election Status'}</span>
               </h3>
-              <p className="text-xs text-slate-500">
-                {isTamil ? 'அரசியலமைப்பு விதிமுறைகளின்படி தற்போதைய தேர்தல் நிலவரம்' : 'Official statutory election lifecycle status verified from the master ledger.'}
+              <p className="text-xs text-stone-500 mt-0.5">
+                {isTamil
+                  ? 'அரசியலமைப்பு விதிமுறைகளின்படி தற்போதைய தேர்தல் நிலவரம்'
+                  : 'Official statutory election lifecycle status verified from the master ledger.'}
               </p>
             </div>
-            <span className="text-xs font-semibold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 self-start sm:self-auto">
-              {elections[0]?.status === 'OPEN' ? (isTamil ? 'வாக்குப்பதிவு நடைபெறுகிறது' : 'VOTING IS OPEN') : elections[0]?.status || 'DRAFT'}
+            <span className={`text-xs font-semibold px-3 py-1 rounded-full self-start sm:self-auto ${
+              elections[0]?.status === 'OPEN'
+                ? 'bg-green-100 text-green-800 border border-green-200'
+                : 'bg-amber-100 text-amber-800 border border-amber-200'
+            }`}>
+              {elections[0]?.status === 'OPEN'
+                ? (isTamil ? 'வாக்குப்பதிவு நடைபெறுகிறது' : 'VOTING IS OPEN')
+                : (elections[0]?.status || 'LOADING')}
             </span>
           </div>
 
           {elections.length > 0 ? (
             <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-              <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-                <span className="text-slate-500 font-medium">{isTamil ? 'தேர்தல் பெயர்' : 'Election Title'}</span>
-                <p className="font-bold text-slate-900 mt-1 text-sm">{elections[0].title}</p>
-                <p className="text-slate-600 mt-0.5">{elections[0].constituency}</p>
+              <div className="p-3.5 bg-stone-50 rounded-xl border border-stone-100">
+                <span className="text-stone-500 font-medium">{isTamil ? 'தேர்தல் பெயர்' : 'Election Title'}</span>
+                <p className="font-bold text-stone-900 mt-1 text-sm">{elections[0].title}</p>
+                <p className="text-stone-600 mt-0.5">{elections[0].constituency}</p>
               </div>
 
-              <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-                <span className="text-slate-500 font-medium">{isTamil ? 'வாக்குப்பதிவு நேரம்' : 'Voting Window'}</span>
-                <p className="font-semibold text-slate-900 mt-1">
+              <div className="p-3.5 bg-stone-50 rounded-xl border border-stone-100">
+                <span className="text-stone-500 font-medium">{isTamil ? 'வாக்குப்பதிவு நேரம்' : 'Voting Window'}</span>
+                <p className="font-semibold text-stone-900 mt-1">
                   {new Date(elections[0].startTime).toLocaleDateString()} — {new Date(elections[0].endTime).toLocaleDateString()}
                 </p>
-                <p className="text-slate-600 mt-0.5">Time: {new Date(elections[0].startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} to {new Date(elections[0].endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                <p className="text-stone-600 mt-0.5">
+                  {new Date(elections[0].startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} to{' '}
+                  {new Date(elections[0].endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </p>
               </div>
 
-              <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-100">
-                <span className="text-slate-500 font-medium">{isTamil ? 'மொத்த வாக்காளர்கள்' : 'Eligible Electors'}</span>
-                <p className="font-bold text-slate-900 mt-1 text-sm">
-                  {elections[0].totalEligibleVoters?.toLocaleString() || '1,250,000'}
+              <div className="p-3.5 bg-stone-50 rounded-xl border border-stone-100">
+                <span className="text-stone-500 font-medium">{isTamil ? 'மொத்த வாக்காளர்கள்' : 'Eligible Electors'}</span>
+                <p className="font-bold text-stone-900 mt-1 text-sm">
+                  {elections[0].totalEligibleVoters?.toLocaleString() || '—'}
                 </p>
-                <p className="text-slate-600 mt-0.5">{elections[0].state}</p>
+                <p className="text-stone-600 mt-0.5">{elections[0].state}</p>
               </div>
             </div>
           ) : (
-            <div className="mt-4 text-xs text-slate-500">Loading election status...</div>
+            <div className="mt-4 flex space-x-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex-1 h-16 shimmer" />
+              ))}
+            </div>
           )}
         </section>
 
-        {/* System Architecture: Security & Privacy */}
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Security Information */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="p-2.5 rounded-xl bg-blue-50 text-blue-700 border border-blue-100">
-                <ShieldAlert className="w-5 h-5" />
+        {/* Feature Cards */}
+        <section className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          {features.map((f, i) => {
+            const Icon = f.icon;
+            return (
+              <div key={i} className="bg-white rounded-2xl border border-stone-200 p-5 shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-start space-x-3">
+                  <div className={`p-2.5 rounded-xl border shrink-0 ${f.bg}`}>
+                    <Icon className={`w-5 h-5 ${f.color}`} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-stone-900">{f.title}</h3>
+                    <p className="text-xs text-stone-600 mt-1 leading-relaxed">{f.desc}</p>
+                  </div>
+                </div>
               </div>
-              <div>
-                <h3 className="text-base font-bold text-slate-900">
-                  {isTamil ? 'பாதுகாப்பு கட்டமைப்பு' : 'Security Architecture'}
-                </h3>
-                <p className="text-xs text-slate-500">{isTamil ? 'அனுமதிக்கப்பட்ட பிளாக்செயின்' : 'Permissioned Ledger & Tamper Proofing'}</p>
-              </div>
-            </div>
+            );
+          })}
+        </section>
 
-            <ul className="space-y-3 text-xs text-slate-600">
-              <li className="flex items-start space-x-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                <span>
-                  <strong>{isTamil ? 'மாற்ற முடியாத பதிவு' : 'Immutable Permissioned Ledger'}:</strong>{' '}
-                  {isTamil
-                    ? 'பதிவு செய்யப்பட்ட ஒவ்வொரு வாக்கும் பிளாக்செயின் சங்கிலியில் SHA-256 ஹாஷிங் மற்றும் மெர்கில் ரூட் மூலம் பாதுகாக்கப்படுகிறது.'
-                    : 'Every cast vote is cryptographically anchored via Merkle Trees on Hyperledger Fabric nodes.'}
-                </span>
-              </li>
-              <li className="flex items-start space-x-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                <span>
-                  <strong>{isTamil ? 'இரட்டை வாக்கு தடுப்பு' : 'Strict One-Vote Enforcement'}:</strong>{' '}
-                  {isTamil
-                    ? 'ஒரே முறை பயன்படும் குறியீடு (Token) வாக்குப்பதிவின் போது உடனடியாகப் பயன்படுத்தப்பட்டதாக முடக்கப்படுகிறது.'
-                    : 'Atomic consumption of single-use voting credentials guarantees duplicate vote prevention.'}
-                </span>
-              </li>
-              <li className="flex items-start space-x-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                <span>
-                  <strong>{isTamil ? 'மாற்ற முடியாத வாக்குகள்' : 'Tamper-Proof Ballots'}:</strong>{' '}
-                  {isTamil
-                    ? 'பதிவு செய்யப்பட்ட வாக்குகளை எந்தவொரு அமைப்பாலும் திருத்தவோ அல்லது நீக்கவோ முடியாது.'
-                    : 'Zero external or system API exists to modify ballots, alter votes, or tamper with consensus tallies.'}
-                </span>
-              </li>
-            </ul>
-          </div>
-
-          {/* Privacy Information */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="p-2.5 rounded-xl bg-purple-50 text-purple-700 border border-purple-100">
-                <Eye className="w-5 h-5" />
+        {/* Technology Stack */}
+        <section className="bg-white rounded-2xl border border-stone-200 p-6 shadow-sm">
+          <h3 className="text-sm font-bold text-stone-900 mb-4 flex items-center space-x-2">
+            <Zap className="w-4 h-4 text-amber-600" />
+            <span>{isTamil ? 'தொழில்நுட்பக் கட்டமைப்பு' : 'Technology Stack'}</span>
+          </h3>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            {[
+              { label: 'Hyperledger Fabric', sub: 'v2.5 Permissioned' },
+              { label: 'Solidity EVM', sub: 'Smart Contract Layer' },
+              { label: 'SMS OTP', sub: 'Twilio / Fast2SMS' },
+              { label: 'AES-256 + SHA-3', sub: 'Cryptographic Core' },
+            ].map((tech, i) => (
+              <div key={i} className="p-3 bg-stone-50 rounded-xl border border-stone-100 text-center">
+                <p className="font-bold text-stone-800">{tech.label}</p>
+                <p className="text-stone-500 mt-0.5">{tech.sub}</p>
               </div>
-              <div>
-                <h3 className="text-base font-bold text-slate-900">
-                  {isTamil ? 'தனியுரிமை & ரகசியத்தன்மை' : 'Privacy & Zero Linkage'}
-                </h3>
-                <p className="text-xs text-slate-500">{isTamil ? 'அரசியலமைப்பு ரகசிய வாக்கு' : 'Cryptographic Air-Gap'}</p>
-              </div>
-            </div>
-
-            <ul className="space-y-3 text-xs text-slate-600">
-              <li className="flex items-start space-x-2">
-                <CheckCircle2 className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
-                <span>
-                  <strong>{isTamil ? 'அடையாள இடைவெளி' : 'Identity Domain Segregation'}:</strong>{' '}
-                  {isTamil
-                    ? 'வாக்காளரின் ஆதார்/EPIC அடையாளம் வாக்குச்சீட்டில் இணைக்கப்படுவதில்லை; அநாமதேய டோக்கன் மட்டுமே வழங்கப்படுகிறது.'
-                    : 'Strict boundary between Electoral Identity domain and Anonymous Ballot casting domain.'}
-                </span>
-              </li>
-              <li className="flex items-start space-x-2">
-                <CheckCircle2 className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
-                <span>
-                  <strong>{isTamil ? 'வாக்காளர் தேர்வு ரகசியம்' : 'No Voter-Candidate Linkage'}:</strong>{' '}
-                  {isTamil
-                    ? 'வாக்காளர் யாருக்கு வாக்களித்தார் என்பதை எந்தவொரு நபரோ அல்லது கணினியோ பார்க்க முடியாது.'
-                    : 'Neither system operators nor database logs can reconstruct who an individual voted for.'}
-                </span>
-              </li>
-              <li className="flex items-start space-x-2">
-                <CheckCircle2 className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
-                <span>
-                  <strong>{isTamil ? 'வெளிப்படையான தணிக்கை' : 'Independent Auditor Verification'}:</strong>{' '}
-                  {isTamil
-                    ? 'CAG தணிக்கையாளர்கள் ரகசிய வாக்குப்பதிவுக்கு எந்தவித பாதிப்பும் இன்றி கணித ரீதியாக முடிவுகளை சரிபார்க்க முடியும்.'
-                    : 'Independent CAG auditors verify mathematical tally proofs without decrypting individual voter ballots.'}
-                </span>
-              </li>
-            </ul>
+            ))}
           </div>
         </section>
 
-        {/* About the System */}
-        <section className="bg-slate-100 rounded-2xl p-6 text-xs text-slate-600 leading-relaxed">
-          <h3 className="text-sm font-bold text-slate-900 mb-2">
+        {/* About */}
+        <section className="bg-amber-50 rounded-2xl border border-amber-100 p-6 text-xs text-stone-600 leading-relaxed">
+          <h3 className="text-sm font-bold text-stone-900 mb-2">
             {isTamil ? 'அமைப்பைப் பற்றி' : 'About the National E-Voting Architecture'}
           </h3>
           <p>
             {isTamil
-              ? 'இந்த தளம் இந்திய தேர்தல் ஆணையத்தின் வழிகாட்டுதலின் கீழ், வாக்காளர்களின் அரசியலமைப்பு உரிமைகளைப் பாதுகாக்கும் நோக்குடன் உருவாக்கப்பட்டுள்ளது. வாக்காளர்கள் தங்கள் வாக்காளர் அடையாள அட்டை மற்றும் ஆதார் வழியாக பாதுகாப்பாகவும் ரகசியமாகவும் வாக்களிக்கும் வசதியை இது உறுதி செய்கிறது.'
-              : 'Developed strictly under statutory constitutional guidelines of the Election Commission of India. The architecture maintains an end-to-end cryptographically secured voting workflow ensuring verified citizens exercise their franchise with total privacy and anonymity.'}
+              ? 'இந்த தளம் இந்திய தேர்தல் ஆணையத்தின் வழிகாட்டுதலின் கீழ், வாக்காளர்களின் அரசியலமைப்பு உரிமைகளைப் பாதுகாக்கும் நோக்குடன் உருவாக்கப்பட்டுள்ளது. வாக்காளர்கள் தங்கள் வாக்காளர் அடையாள அட்டை மற்றும் மொபைல் OTP வழியாக பாதுகாப்பாகவும் ரகசியமாகவும் வாக்களிக்கும் வசதியை இது உறுதி செய்கிறது.'
+              : 'Developed strictly under statutory constitutional guidelines of the Election Commission of India. The architecture maintains end-to-end cryptographically secured voting using free-tier SMS OTP (Twilio/Fast2SMS), ensuring verified citizens exercise their franchise with total privacy and anonymity.'}
           </p>
         </section>
       </main>
 
       {/* Footer */}
-      <footer className="bg-slate-900 text-slate-400 text-xs py-6 border-t border-slate-800">
+      <footer className="bg-stone-900 text-stone-400 text-xs py-6 border-t border-stone-800">
         <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p>
             © 2026 {isTamil ? 'இந்திய தேர்தல் ஆணையம்' : 'Election Commission of India'}. All Rights Reserved.
           </p>
-          <div className="flex items-center space-x-4 text-slate-500">
+          <div className="flex items-center space-x-4 text-stone-500">
             <span>ISO/IEC 27001 Certified</span>
             <span>•</span>
-            <span>UIDAI Aadhaar 2.5 Compliant</span>
-            <span>•</span>
             <span>Hyperledger Fabric v2.5</span>
+            <span>•</span>
+            <span>SMS OTP Verified</span>
           </div>
         </div>
       </footer>

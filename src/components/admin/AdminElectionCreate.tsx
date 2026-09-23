@@ -111,7 +111,7 @@ export const AdminElectionCreate: React.FC = () => {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Parliamentary General Election 2026"
-              className="mt-1 block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-blue-500"
+              className="mt-1 block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-emerald-500"
             />
           </div>
 
@@ -120,7 +120,7 @@ export const AdminElectionCreate: React.FC = () => {
             <select
               value={type}
               onChange={(e) => setType(e.target.value as any)}
-              className="mt-1 block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-blue-500"
+              className="mt-1 block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-emerald-500"
             >
               <option value="PARLIAMENTARY">Parliamentary (Lok Sabha)</option>
               <option value="ASSEMBLY">Legislative Assembly (Vidhan Sabha)</option>
@@ -136,7 +136,7 @@ export const AdminElectionCreate: React.FC = () => {
             rows={2}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="mt-1 block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-blue-500"
+            className="mt-1 block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-emerald-500"
             placeholder="Official gazette description of the electoral event..."
           />
         </div>
@@ -151,7 +151,7 @@ export const AdminElectionCreate: React.FC = () => {
               value={constituency}
               onChange={(e) => setConstituency(e.target.value)}
               placeholder="e.g. Central Chennai (Constituency No. 04)"
-              className="mt-1 block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-blue-500"
+              className="mt-1 block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-emerald-500"
             />
           </div>
 
@@ -163,7 +163,7 @@ export const AdminElectionCreate: React.FC = () => {
               value={state}
               onChange={(e) => setState(e.target.value)}
               placeholder="e.g. Tamil Nadu"
-              className="mt-1 block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-blue-500"
+              className="mt-1 block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg text-slate-900 focus:ring focus:ring-emerald-500"
             />
           </div>
         </div>
@@ -177,7 +177,7 @@ export const AdminElectionCreate: React.FC = () => {
               required
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-blue-500"
+              className="mt-1 block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-emerald-500"
             />
           </div>
           <div>
@@ -187,7 +187,7 @@ export const AdminElectionCreate: React.FC = () => {
               required
               value={startTime}
               onChange={(e) => setStartTime(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-blue-500"
+              className="mt-1 block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-emerald-500"
             />
           </div>
           <div>
@@ -197,7 +197,7 @@ export const AdminElectionCreate: React.FC = () => {
               required
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-blue-500"
+              className="mt-1 block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-emerald-500"
             />
           </div>
           <div>
@@ -207,7 +207,7 @@ export const AdminElectionCreate: React.FC = () => {
               required
               value={endTime}
               onChange={(e) => setEndTime(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-blue-500"
+              className="mt-1 block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-emerald-500"
             />
           </div>
         </div>
@@ -220,7 +220,7 @@ export const AdminElectionCreate: React.FC = () => {
               type="number"
               value={totalElectors}
               onChange={(e) => setTotalElectors(Number(e.target.value))}
-              className="mt-1 block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-blue-500"
+              className="mt-1 block w-full px-3 py-2 text-sm border border-slate-300 rounded-lg text-slate-900 focus:ring-2 focus:ring-emerald-500"
             />
           </div>
 
@@ -230,7 +230,7 @@ export const AdminElectionCreate: React.FC = () => {
               id="allowNOTA"
               checked={allowNOTA}
               onChange={(e) => setAllowNOTA(e.target.checked)}
-              className="w-4 h-4 text-blue-600 rounded"
+              className="w-4 h-4 text-emerald-600 rounded"
             />
             <label htmlFor="allowNOTA" className="text-xs font-semibold text-slate-700">
               Enable NOTA (Rule 49-O)
@@ -243,7 +243,7 @@ export const AdminElectionCreate: React.FC = () => {
               id="seniorAccessibility"
               checked={seniorAccessibility}
               onChange={(e) => setSeniorAccessibility(e.target.checked)}
-              className="w-4 h-4 text-blue-600 rounded"
+              className="w-4 h-4 text-emerald-600 rounded"
             />
             <label htmlFor="seniorAccessibility" className="text-xs font-semibold text-slate-700">
               Senior Citizen Accessibility Mode
@@ -263,7 +263,7 @@ export const AdminElectionCreate: React.FC = () => {
           <button
             type="submit"
             disabled={loading}
-            className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center space-x-2 shadow-sm disabled:opacity-50"
+            className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center space-x-2 shadow-sm disabled:opacity-50"
           >
             <PlusCircle className="w-4 h-4" />
             <span>{loading ? 'Creating Election Draft...' : 'Create Election Draft'}</span>

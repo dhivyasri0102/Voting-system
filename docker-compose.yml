@@ -15,9 +15,7 @@ services:
       - PORT=3000
       - DATABASE_URL=postgresql://election_admin:SecureElectionPass2026!@postgres:5432/evoting_db
       - REDIS_URL=redis://:RedisSecurePass2026!@redis:6379/0
-      # External Government API integrations explicitly UNCONFIGURED by default
-      - UIDAI_ENVIRONMENT=unconfigured
-      - UIDAI_ENABLE=false
+      # Electoral roll integration is explicitly unconfigured by default
       - ELECTORAL_ROLL_ENVIRONMENT=unconfigured
       # Hyperledger Fabric Local Configuration
       - FABRIC_CHANNEL=election-channel

@@ -77,8 +77,8 @@ export const VoterDashboard: React.FC = () => {
               {isTamil ? 'வாக்குப்பதிவு நிலை' : 'Suffrage Status'}
             </span>
             {hasVoted ? (
-              <span className="inline-flex items-center space-x-1 px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-bold border border-blue-300">
-                <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />
+              <span className="inline-flex items-center space-x-1 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-300">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                 <span>{isTamil ? 'வாக்கு பதிவு செய்யப்பட்டது' : 'VOTE RECORDED'}</span>
               </span>
             ) : (
@@ -101,7 +101,7 @@ export const VoterDashboard: React.FC = () => {
           </div>
 
           <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-            <span className="text-slate-500">{isTamil ? 'ஆதார் அங்கீகாரம்' : 'UIDAI Authentication'}</span>
+            <span className="text-slate-500">{isTamil ? 'மொபைல் OTP அங்கீகாரம்' : 'Mobile SMS OTP Authentication'}</span>
             <div className="font-bold text-slate-900 flex items-center space-x-1 mt-0.5">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
               <span>{isTamil ? 'OTP உறுதி செய்யப்பட்டது' : 'OTP Confirmed'}</span>
@@ -167,7 +167,7 @@ export const VoterDashboard: React.FC = () => {
                       </span>
                       <Link
                         to="/voter/status"
-                        className="text-[11px] text-blue-600 hover:underline mt-1 block"
+                        className="text-[11px] text-emerald-600 hover:underline mt-1 block"
                       >
                         {isTamil ? 'ரசீதை பார்க்க' : 'View Cryptographic Receipt →'}
                       </Link>

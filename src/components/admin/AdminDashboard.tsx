@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
-  BarChart3, Users, Vote, ShieldCheck, AlertTriangle, CheckCircle2, 
-  RefreshCw, Play, Square, Clock, PlusCircle, ArrowRight, Server, Database,
-  Cpu, FileText, CheckCircle, LogOut
+  BarChart3, Users, ShieldCheck, AlertTriangle, CheckCircle2,
+  RefreshCw, Play, Square, Clock, PlusCircle, LogOut
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.js';
-import { Election, ElectionStatus } from '../../types/index.js';
+import { Election } from '../../types/index.js';
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -20,7 +19,7 @@ export const AdminDashboard: React.FC = () => {
 
   // Lifecycle confirmation modal state
   const [modalType, setModalType] = useState<'OPEN' | 'CLOSE' | null>(null);
-  const [selectedElectionId, setSelectedElectionId] = useState<string>('ELEC-2026-CHENN-01');
+  const [selectedElectionId, setSelectedElectionId] = useState<string>('');
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -101,20 +100,6 @@ export const AdminDashboard: React.FC = () => {
   };
 
   const electionStats = stats?.electionStats || {};
-  const systemStatus = stats?.systemStatus || {};
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'HEALTHY':
-        return <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">HEALTHY</span>;
-      case 'DEGRADED':
-        return <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-100 text-amber-800 border border-amber-300">DEGRADED</span>;
-      case 'NOT CONFIGURED':
-        return <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-slate-200 text-slate-700 border border-slate-300">NOT CONFIGURED</span>;
-      default:
-        return <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-100 text-rose-800 border border-rose-300">UNAVAILABLE</span>;
-    }
-  };
 
   const currentElection = elections.find((e) => e.id === selectedElectionId) || elections[0];
 
@@ -124,7 +109,7 @@ export const AdminDashboard: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200 gap-4">
         <div>
           <div className="flex items-center space-x-2">
-            <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-mono text-xs font-bold uppercase">
+            <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-mono text-xs font-bold uppercase">
               Role: ELECTION_AUTHORITY
             </span>
             <span className="text-xs text-slate-500 font-mono">
@@ -142,7 +127,7 @@ export const AdminDashboard: React.FC = () => {
         <div className="flex items-center space-x-2.5">
           <Link
             to="/admin/elections/create"
-            className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center space-x-1.5 shadow-sm transition-colors"
+            className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center space-x-1.5 shadow-sm transition-colors"
           >
             <PlusCircle className="w-3.5 h-3.5" />
             <span>Create Election</span>
@@ -197,7 +182,7 @@ export const AdminDashboard: React.FC = () => {
           {/* Scheduled Elections */}
           <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm">
             <span className="text-[11px] font-semibold text-slate-500">Scheduled</span>
-            <div className="text-xl font-extrabold text-blue-600 mt-1">
+            <div className="text-xl font-extrabold text-emerald-600 mt-1">
               {electionStats.scheduledElections ?? 0}
             </div>
             <span className="text-[10px] text-slate-400 mt-0.5 block">Awaiting start time</span>
@@ -224,7 +209,7 @@ export const AdminDashboard: React.FC = () => {
           {/* Authenticated / Credentials Issued */}
           <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm">
             <span className="text-[11px] font-semibold text-slate-500">Credentials Issued</span>
-            <div className="text-xl font-extrabold text-indigo-600 mt-1">
+            <div className="text-xl font-extrabold text-amber-600 mt-1">
               {electionStats.votingCredentialsIssued ?? 0}
             </div>
             <span className="text-[10px] text-slate-400 mt-0.5 block">Anonymous tokens</span>
@@ -276,73 +261,7 @@ export const AdminDashboard: React.FC = () => {
         </div>
       </section>
 
-      {/* 2. System Components Status (Section 3 Requirement) */}
-      <section className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-          <div>
-            <h2 className="text-sm font-bold text-slate-900 flex items-center space-x-2">
-              <Server className="w-4 h-4 text-blue-600" />
-              <span>System Health & Integrations</span>
-            </h2>
-            <p className="text-xs text-slate-500">
-              Government integration status displays: HEALTHY, DEGRADED, NOT CONFIGURED, or UNAVAILABLE. Never marked healthy unless real integration confirms it.
-            </p>
-          </div>
-          <Link
-            to="/admin/system"
-            className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center space-x-1"
-          >
-            <span>View Diagnostics</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-xs">
-          {/* Backend */}
-          <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-            <div className="text-slate-500 text-[11px] font-medium">Backend API</div>
-            <div className="mt-1">{getStatusBadge(systemStatus.backend || 'HEALTHY')}</div>
-            <span className="text-[10px] text-slate-400 mt-1 block">Express Gateway</span>
-          </div>
-
-          {/* Database */}
-          <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-            <div className="text-slate-500 text-[11px] font-medium">PostgreSQL DB</div>
-            <div className="mt-1">{getStatusBadge(systemStatus.database || 'HEALTHY')}</div>
-            <span className="text-[10px] text-slate-400 mt-1 block">State Persistence</span>
-          </div>
-
-          {/* Redis */}
-          <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-            <div className="text-slate-500 text-[11px] font-medium">Redis Cache</div>
-            <div className="mt-1">{getStatusBadge(systemStatus.redis || 'HEALTHY')}</div>
-            <span className="text-[10px] text-slate-400 mt-1 block">Distributed Lock</span>
-          </div>
-
-          {/* Blockchain */}
-          <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-            <div className="text-slate-500 text-[11px] font-medium">Hyperledger Fabric</div>
-            <div className="mt-1">{getStatusBadge(systemStatus.blockchain || 'HEALTHY')}</div>
-            <span className="text-[10px] text-slate-400 mt-1 block">Permissioned Ledger</span>
-          </div>
-
-          {/* UIDAI Integration */}
-          <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-            <div className="text-slate-500 text-[11px] font-medium">UIDAI Gateway</div>
-            <div className="mt-1">{getStatusBadge(systemStatus.uidai || 'NOT CONFIGURED')}</div>
-            <span className="text-[10px] text-slate-400 mt-1 block">Aadhaar Auth</span>
-          </div>
-
-          {/* Electoral Roll */}
-          <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-            <div className="text-slate-500 text-[11px] font-medium">Electoral Roll</div>
-            <div className="mt-1">{getStatusBadge(systemStatus.electoralRoll || 'NOT CONFIGURED')}</div>
-            <span className="text-[10px] text-slate-400 mt-1 block">Voter ID Register</span>
-          </div>
-        </div>
-      </section>
-
-      {/* 3. Election Lifecycle Control & Quick Actions */}
+      {/* 2. Election Lifecycle Control & Quick Actions */}
       <section className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-2">
           <div>
@@ -377,26 +296,30 @@ export const AdminDashboard: React.FC = () => {
               </button>
             )}
 
-            <Link
-              to={`/admin/elections/${currentElection?.id}/candidates`}
-              className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold flex items-center space-x-1.5 transition-colors"
-            >
-              <Users className="w-3.5 h-3.5" />
-              <span>Manage Candidates</span>
-            </Link>
+            {currentElection && (
+              <>
+                <Link
+                  to={`/admin/elections/${currentElection.id}/candidates`}
+                  className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold flex items-center space-x-1.5 transition-colors"
+                >
+                  <Users className="w-3.5 h-3.5" />
+                  <span>Manage Candidates</span>
+                </Link>
 
-            <Link
-              to={`/admin/results/${currentElection?.id}`}
-              className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold flex items-center space-x-1.5 transition-colors"
-            >
-              <BarChart3 className="w-3.5 h-3.5" />
-              <span>Results & Tally</span>
-            </Link>
+                <Link
+                  to={`/admin/results/${currentElection.id}`}
+                  className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold flex items-center space-x-1.5 transition-colors"
+                >
+                  <BarChart3 className="w-3.5 h-3.5" />
+                  <span>Results & Tally</span>
+                </Link>
+              </>
+            )}
           </div>
         </div>
 
         <div className="p-3.5 bg-slate-50 rounded-xl text-xs text-slate-600 flex items-start space-x-2.5">
-          <ShieldCheck className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+          <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
           <div>
             <strong>Strict RBAC & Audit Enforcement:</strong> Administrators cannot cast ballots or view individual voter choices. Zero API exists allowing administrators to alter cast votes or change election tallies.
           </div>

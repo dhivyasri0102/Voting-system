@@ -145,6 +145,7 @@ export const VoterCandidateSelect: React.FC = () => {
                   <div>
                     <div className="flex items-center space-x-2">
                       <span className="text-sm font-extrabold text-slate-900">{c.name}</span>
+                      {c.logo && <img src={c.logo} alt="" className="h-7 w-7 rounded object-contain border border-slate-200" />}
                       <span className="text-xs font-semibold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
                         {c.party || 'Independent'}
                       </span>
