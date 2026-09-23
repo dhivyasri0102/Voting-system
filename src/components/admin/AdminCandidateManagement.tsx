@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { fetchCandidates, addCandidate, editCandidate, disableCandidate } from '../../services/blockchain';
 import { useParams, Link } from 'react-router-dom';
 import { 
   Users, PlusCircle, Edit, Ban, Eye, CheckCircle2, AlertCircle, 
@@ -45,11 +46,8 @@ export const AdminCandidateManagement: React.FC = () => {
         setElection(elecData);
       }
 
-      const candRes = await fetch(`/api/v1/elections/${electionId}/candidates`);
-      if (candRes.ok) {
-        const candData = await candRes.json();
-        setCandidates(candData);
-      }
+      const candidatesData = await fetchCandidates();
+        setCandidates(candidatesData);
     } catch (err) {
       console.error('Failed to load election candidates', err);
     } finally {
@@ -104,36 +102,24 @@ export const AdminCandidateManagement: React.FC = () => {
     setErrorMessage(null);
 
     try {
-      const res = await fetch(`/api/v1/admin/elections/${electionId}/candidates`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${adminSession?.token}`,
-        },
-        body: JSON.stringify({
-          id: formCandidateId,
-          name: formName,
-          party: formType === 'Party' ? formParty : 'Independent',
-          candidate_type: formType,
-          constituency: election.constituency,
-          symbol: formSymbol,
-          photo: formPhoto,
-          description: formDescription,
-          information: formInformation,
-          status: formStatus,
-        }),
+      const tx = await addCandidate({
+        id: formCandidateId,
+        name: formName,
+        party: formType === 'Party' ? formParty : 'Independent',
+        candidateType: formType,
+        constituency: election?.constituency || '',
+        symbol: formSymbol,
+        photo: formPhoto,
+        description: formDescription,
+        information: formInformation,
+        status: formStatus,
       });
-
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        setErrorMessage(data.message || 'Validation failed.');
-      } else {
-        setStatusMessage(`Candidate ${data.candidate.name} added successfully.`);
-        setShowAddModal(false);
-        fetchElectionAndCandidates();
-      }
+      await tx.wait();
+      setStatusMessage(`Candidate ${formName} added successfully.`);
+      setShowAddModal(false);
+      fetchElectionAndCandidates();
     } catch (err) {
-      setErrorMessage('Network error creating candidate.');
+      setErrorMessage('Failed to add candidate on blockchain.');
     } finally {
       setSubmitting(false);
     }
@@ -147,34 +133,22 @@ export const AdminCandidateManagement: React.FC = () => {
     setErrorMessage(null);
 
     try {
-      const res = await fetch(`/api/v1/admin/elections/${electionId}/candidates/${selectedCandidate.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${adminSession?.token}`,
-        },
-        body: JSON.stringify({
-          name: formName,
-          party: formType === 'Party' ? formParty : 'Independent',
-          candidate_type: formType,
-          symbol: formSymbol,
-          photo: formPhoto,
-          description: formDescription,
-          information: formInformation,
-          status: formStatus,
-        }),
+      const tx = await editCandidate(selectedCandidate.id, {
+        name: formName,
+        party: formType === 'Party' ? formParty : 'Independent',
+        candidateType: formType,
+        symbol: formSymbol,
+        photo: formPhoto,
+        description: formDescription,
+        information: formInformation,
+        status: formStatus,
       });
-
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        setErrorMessage(data.message || 'Failed to update candidate.');
-      } else {
-        setStatusMessage(`Candidate ${selectedCandidate.id} updated successfully.`);
-        setShowEditModal(false);
-        fetchElectionAndCandidates();
-      }
+      await tx.wait();
+      setStatusMessage(`Candidate ${selectedCandidate.id} updated successfully.`);
+      setShowEditModal(false);
+      fetchElectionAndCandidates();
     } catch (err) {
-      setErrorMessage('Network error updating candidate.');
+      setErrorMessage('Failed to edit candidate on blockchain.');
     } finally {
       setSubmitting(false);
     }
@@ -189,22 +163,12 @@ export const AdminCandidateManagement: React.FC = () => {
     if (!confirm) return;
 
     try {
-      const res = await fetch(`/api/v1/admin/elections/${electionId}/candidates/${candidateId}/disable`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${adminSession?.token}`,
-        },
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        alert(data.message || 'Failed to disable candidate.');
-      } else {
-        setStatusMessage(data.message);
-        fetchElectionAndCandidates();
-      }
+      const tx = await disableCandidate(candidateId);
+      await tx.wait();
+      setStatusMessage('Candidate disabled successfully.');
+      fetchElectionAndCandidates();
     } catch (err) {
-      alert('Network error disabling candidate.');
+      alert('Failed to disable candidate on blockchain.');
     }
   };
 

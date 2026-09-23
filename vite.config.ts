@@ -1,11 +1,11 @@
-import tailwindcss from '@tailwindcss/vite';
+// import tailwindcss from '@tailwindcss/vite'; // removed due to module resolution issues
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [react()],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),

@@ -1,28 +1,58 @@
 import React from 'react';
-import { Outlet, NavLink, useNavigate, Link } from 'react-router-dom';
-import { 
-  Vote, ShieldCheck, LogOut, Globe, Volume2, Eye, 
-  HelpCircle, CheckCircle2, User, FileText
+import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import {
+  Vote,
+  LogOut,
+  Globe,
+  Volume2,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.js';
+import { connectWallet } from '../../services/blockchain.js';
 
 export const VoterLayout: React.FC = () => {
   const navigate = useNavigate();
-  const { 
-    voterSession, 
-    isVoterAuthenticated, 
-    logoutVoter, 
-    accessibility, 
-    setAccessibility, 
-    toggleLanguage 
+
+  const {
+    voterSession,
+    isVoterAuthenticated,
+    logoutVoter,
+    accessibility,
+    setAccessibility,
+    toggleLanguage,
   } = useAuth();
 
   const isTamil = accessibility.language === 'ta';
+
+  // Wallet state
+  const [walletAddress, setWalletAddress] = React.useState<string | null>(null);
+  const [walletError, setWalletError] = React.useState<string | null>(null);
 
   if (!isVoterAuthenticated || !voterSession) {
     navigate('/voter/login', { replace: true });
     return null;
   }
+
+  // Connect MetaMask wallet
+  const handleConnectWallet = async () => {
+    try {
+      setWalletError(null);
+
+      const wallet = await connectWallet();
+
+      setWalletAddress(wallet.address);
+
+      console.log('Wallet connected:', wallet.address);
+      console.log('Chain ID:', wallet.chainId);
+    } catch (error) {
+      console.error('Wallet connection failed:', error);
+
+      setWalletError(
+        error instanceof Error
+          ? error.message
+          : 'Failed to connect wallet'
+      );
+    }
+  };
 
   const handleLogout = () => {
     logoutVoter();
@@ -32,8 +62,10 @@ export const VoterLayout: React.FC = () => {
   const speakText = (text: string) => {
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
+
       const u = new SpeechSynthesisUtterance(text);
       u.lang = isTamil ? 'ta-IN' : 'en-IN';
+
       window.speechSynthesis.speak(u);
     }
   };
@@ -45,20 +77,30 @@ export const VoterLayout: React.FC = () => {
   };
 
   return (
-    <div className={`min-h-screen flex flex-col font-sans ${
-      accessibility.highContrast ? 'bg-black text-amber-300' : 'bg-slate-50 text-slate-900'
-    }`}>
+    <div
+      className={`min-h-screen flex flex-col font-sans ${
+        accessibility.highContrast
+          ? 'bg-black text-amber-300'
+          : 'bg-slate-50 text-slate-900'
+      }`}
+    >
+
       {/* Top Accessibility & Assistance Bar */}
       <div className="bg-slate-900 text-slate-200 text-xs py-2 px-4 border-b border-slate-800">
         <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-2">
+
           <div className="flex items-center space-x-2">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+
             <span className="font-semibold text-slate-300">
-              {isTamil ? 'தேசிய வாக்காளர் சேவை தளம் • அங்கீகரிக்கப்பட்ட அமர்வு' : 'National Citizen Suffrage Portal • Authenticated Session'}
+              {isTamil
+                ? 'தேசிய வாக்காளர் சேவை தளம் • அங்கீகரிக்கப்பட்ட அமர்வு'
+                : 'National Citizen Suffrage Portal • Authenticated Session'}
             </span>
           </div>
 
           <div className="flex items-center space-x-3">
+
             {/* Audio narration */}
             <button
               onClick={() =>
@@ -72,7 +114,9 @@ export const VoterLayout: React.FC = () => {
               title="Voice Assistance"
             >
               <Volume2 className="w-3.5 h-3.5 text-amber-400" />
-              <span>{isTamil ? 'ஒலி வழிகாட்டி' : 'Audio Guide'}</span>
+              <span>
+                {isTamil ? 'ஒலி வழிகாட்டி' : 'Audio Guide'}
+              </span>
             </button>
 
             {/* High Contrast */}
@@ -98,30 +142,65 @@ export const VoterLayout: React.FC = () => {
               className="flex items-center space-x-1 px-2.5 py-0.5 rounded bg-emerald-700 hover:bg-emerald-600 text-white font-semibold transition-colors"
             >
               <Globe className="w-3.5 h-3.5" />
-              <span>{isTamil ? 'English' : 'தமிழ்'}</span>
+
+              <span>
+                {isTamil ? 'English' : 'தமிழ்'}
+              </span>
             </button>
+
           </div>
         </div>
       </div>
 
       {/* Main Navigation Header */}
       <header className="bg-white border-b border-slate-200 shadow-xs">
+
         <div className="max-w-6xl mx-auto px-4 py-3.5 flex items-center justify-between">
+
+          {/* Logo and voter information */}
           <div className="flex items-center space-x-3">
+
             <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs">
               <Vote className="w-6 h-6" />
             </div>
+
             <div>
+
               <div className="text-sm font-bold text-slate-900">
-                {isTamil ? 'தேசிய மின்னணு வாக்குப்பதிவு' : 'National E-Voting Portal'}
+                {isTamil
+                  ? 'தேசிய மின்னணு வாக்குப்பதிவு'
+                  : 'National E-Voting Portal'}
               </div>
+
               <div className="text-[11px] text-slate-500">
-                EPIC: <span className="font-mono font-bold text-slate-700">{voterSession.voterId}</span> • {voterSession.constituency}
+                EPIC:{' '}
+                <span className="font-mono font-bold text-slate-700">
+                  {voterSession.voterId}
+                </span>{' '}
+                • {voterSession.constituency}
               </div>
+
             </div>
           </div>
 
+          {/* Navigation */}
           <nav className="flex items-center space-x-2">
+
+            {/* Connect Wallet */}
+            <button
+              onClick={handleConnectWallet}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                walletAddress
+                  ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                  : 'bg-blue-600 text-white hover:bg-blue-700'
+              }`}
+            >
+              {walletAddress
+                ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
+                : 'Connect Wallet'}
+            </button>
+
+            {/* Dashboard */}
             <NavLink
               to="/voter/dashboard"
               className={({ isActive }) =>
@@ -135,6 +214,7 @@ export const VoterLayout: React.FC = () => {
               {isTamil ? 'முதன்மைப் பக்கம்' : 'Dashboard'}
             </NavLink>
 
+            {/* Voting Status */}
             <NavLink
               to="/voter/status"
               className={({ isActive }) =>
@@ -148,29 +228,57 @@ export const VoterLayout: React.FC = () => {
               {isTamil ? 'வாக்கு நிலை' : 'Voting Status'}
             </NavLink>
 
+            {/* Logout */}
             <button
               onClick={handleLogout}
               className="ml-2 px-3 py-1.5 rounded-lg text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors flex items-center space-x-1"
             >
               <LogOut className="w-3.5 h-3.5" />
-              <span>{isTamil ? 'வெளியேறு' : 'Exit'}</span>
+
+              <span>
+                {isTamil ? 'வெளியேறு' : 'Exit'}
+              </span>
             </button>
+
           </nav>
         </div>
       </header>
 
+      {/* Wallet Error */}
+      {walletError && (
+        <div className="max-w-6xl w-full mx-auto px-4 pt-3">
+          <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-2 text-xs">
+            {walletError}
+          </div>
+        </div>
+      )}
+
       {/* Main Outlet */}
-      <main className={`flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6 ${getFontSizeClass()}`}>
+      <main
+        className={`flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6 ${getFontSizeClass()}`}
+      >
         <Outlet />
       </main>
 
       {/* Footer */}
       <footer className="bg-slate-900 text-slate-400 text-xs py-4 border-t border-slate-800 text-center">
+
         <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>{isTamil ? 'இந்திய தேர்தல் ஆணையம் • அரசியலமைப்பு ரகசிய வாக்கு' : 'Election Commission of India • Constitutional Secret Ballot'}</span>
-          <span className="text-[11px] text-slate-500">Zero Voter-Candidate Linkage Enforced</span>
+
+          <span>
+            {isTamil
+              ? 'இந்திய தேர்தல் ஆணையம் • அரசியலமைப்பு ரகசிய வாக்கு'
+              : 'Election Commission of India • Constitutional Secret Ballot'}
+          </span>
+
+          <span className="text-[11px] text-slate-500">
+            Zero Voter-Candidate Linkage Enforced
+          </span>
+
         </div>
+
       </footer>
+
     </div>
   );
 };

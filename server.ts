@@ -4,13 +4,13 @@ import { fileURLToPath } from 'url';
 import { createServer as createViteServer } from 'vite';
 import apiRouter from './src/backend/routes/api.js';
 import { initializeSecrets } from './src/backend/config/secrets.js';
-import { FabricNetworkManager } from './src/backend/services/FabricNetworkManager.js';
+// Fabric import removed
 
 // 1. Automatically generate secure random values for JWT_SECRET and ADMIN_MFA_SECRET if missing
 initializeSecrets();
 
 // 2. Automatically configure local Fabric development network & development CA certificates
-FabricNetworkManager.getInstance();
+// Fabric network initialization removed
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
