@@ -10,24 +10,23 @@ const ABI = [
   "function owner() view returns (address)"
 ];
 
-// Connect MetaMask
+// Connect MetaMask wallet
 export const connectWallet = async () => {
   if (!window.ethereum) {
-    throw new Error("MetaMask is not installed");
+    throw new Error("MetaMask is not installed. Please install MetaMask to connect a wallet.");
   }
 
   const provider = new ethers.BrowserProvider(window.ethereum);
-
   await provider.send("eth_requestAccounts", []);
-
   const signer = await provider.getSigner();
-
   const address = await signer.getAddress();
+  const network = await provider.getNetwork();
 
   return {
     provider,
     signer,
-    address
+    address,
+    chainId: network.chainId.toString(),
   };
 };
 
@@ -38,7 +37,6 @@ const getContract = async () => {
   }
 
   const provider = new ethers.BrowserProvider(window.ethereum);
-
   const signer = await provider.getSigner();
 
   return new ethers.Contract(
@@ -51,7 +49,6 @@ const getContract = async () => {
 // Get all candidates
 export const fetchCandidates = async () => {
   const contract = await getContract();
-
   const candidates = await contract.getAllCandidates();
 
   return candidates.map((candidate) => ({
