@@ -64,8 +64,7 @@ export const VoterBallotReview: React.FC = () => {
           candidate_id: candidate.id,
           credential_hash: voterSession.credentialHash,
           raw_credential: voterSession.rawCredential,
-          voter_id: voterSession.voterId,
-          voter_secret_nonce: 'SEC-' + Math.random().toString(36).substring(2, 10),
+          voter_secret_nonce: crypto.randomUUID(),
         }),
       });
 
@@ -80,10 +79,10 @@ export const VoterBallotReview: React.FC = () => {
         updateVoterSession({
           hasVoted: true,
           lastVoteReceipt: {
-            transactionReference: data.receipt?.transactionReference || data.transaction_hash,
-            blockIndex: data.receipt?.blockIndex || 108,
-            blockHash: data.receipt?.blockHash || '0x4f8a...92b',
-            timestamp: new Date().toISOString(),
+            transactionReference: data.transaction_reference,
+            blockIndex: data.block_index,
+            blockHash: data.block_hash,
+            timestamp: data.timestamp,
             electionId,
           },
         });
@@ -178,7 +177,7 @@ export const VoterBallotReview: React.FC = () => {
           <span>
             {isTamil
               ? 'உங்கள் வாக்கு அநாமதேய குறியீடாக மட்டுமே சங்கிலியில் பதிவு செய்யப்படும்; உங்கள் அடையாளத்துடன் இணைக்கப்படாது.'
-              : 'Your vote is transmitted anonymously. Zero record links your identity (EPIC/Aadhaar) to this candidate choice.'}
+              : 'Your vote is transmitted anonymously. No record links your EPIC identity to this candidate choice.'}
           </span>
         </div>
 

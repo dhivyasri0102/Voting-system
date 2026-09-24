@@ -6,7 +6,7 @@
  * - Deterministic Smart Contract validation
  * - SHA-256 Merkle Root generation
  * - Cryptographic Block linkage (Hash-chaining)
- * - Strict Separation: NO voter identity, NO Aadhaar on-chain
+ * - Strict Separation: NO voter identity on-chain
  * - Live tamper detection and audit trail
  */
 

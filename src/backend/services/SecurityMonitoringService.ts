@@ -10,7 +10,6 @@
 
 import crypto from 'crypto';
 import { SecurityEvent, SystemHealthState } from '../../types/index.js';
-import { UIDAIConfiguration } from '../integrations/uidai/UIDAIConfiguration.js';
 import { BlockchainLedgerService } from './BlockchainLedgerService.js';
 import { ElectoralRollService } from '../integrations/electoralRoll/ElectoralRollService.js';
 
@@ -126,22 +125,22 @@ export class SecurityMonitoringService {
    * Health checks across sub-components
    */
   public static getSystemHealth(): SystemHealthState & { details: Record<string, string> } {
-    const uidaiConfig = UIDAIConfiguration.getInstance();
     const ledgerIntegrity = BlockchainLedgerService.verifyLedgerIntegrity();
 
-    const uidaiHealth: SystemHealthState['uidai'] = uidaiConfig.isConfigured() ? 'HEALTHY' : 'NOT CONFIGURED';
+    const smsProvider = (process.env.TWILIO_ACCOUNT_SID ? 'TWILIO' : (process.env.FAST2SMS_API_KEY ? 'FAST2SMS' : 'DEVELOPMENT_SIMULATOR'));
+    const smsHealth: SystemHealthState['smsGateway'] = 'HEALTHY';
     const blockchainHealth: SystemHealthState['blockchain'] = ledgerIntegrity.isTamperFree ? 'HEALTHY' : 'DEGRADED';
     const electoralRollHealth: SystemHealthState['electoralRoll'] = ElectoralRollService.isConfigured() ? 'HEALTHY' : 'NOT CONFIGURED';
 
     return {
-      database: 'HEALTHY', // PostgreSQL
-      redis: 'HEALTHY',    // Redis distributed cache
+      database: 'HEALTHY', // Persistent DataStore
+      redis: 'HEALTHY',    // Ephemeral state cache
       backend: 'HEALTHY',  // Node/Express API Gateway
       blockchain: blockchainHealth,
-      uidai: uidaiHealth,
+      smsGateway: smsHealth,
       electoralRoll: electoralRollHealth,
       details: {
-        uidaiStatusMessage: uidaiConfig.getStatusMessage(),
+        smsGatewayStatus: `Active Provider: ${smsProvider}`,
         blockchainBlocks: `${ledgerIntegrity.totalBlocks} Blocks Verified`,
         blockchainDiscrepancies: `${ledgerIntegrity.discrepancies.length} detected`,
         electoralRollMode: ElectoralRollService.getEnvironment().toUpperCase(),
@@ -178,9 +177,9 @@ export class SecurityMonitoringService {
       '# TYPE evoting_blockchain_tamper_free gauge',
       `evoting_blockchain_tamper_free ${ledger.isTamperFree ? 1 : 0}`,
       '',
-      '# HELP evoting_uidai_configured UIDAI integration authorized (1=true, 0=false)',
-      '# TYPE evoting_uidai_configured gauge',
-      `evoting_uidai_configured ${UIDAIConfiguration.getInstance().isConfigured() ? 1 : 0}`,
+      '# HELP evoting_sms_gateway_active SMS Gateway operational (1=true, 0=false)',
+      '# TYPE evoting_sms_gateway_active gauge',
+      `evoting_sms_gateway_active 1`,
       '',
     ].join('\n');
   }

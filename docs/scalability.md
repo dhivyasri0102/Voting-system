@@ -31,4 +31,4 @@ Stateless Express Workers        Stateless Express Workers
 ## 2. Benchmark Projections
 - **Concurrent Polling Capacity**: 10,000 requests/sec across 20 containerized API pods.
 - **Ledger Throughput**: Hyperledger Fabric Raft batches up to 500 transactions per block every 250ms (~2,000 TPS on dedicated NVMe peer nodes).
-- **Graceful Degradation**: If UIDAI gateway experiences latency spikes, identity tokens are queued with back-pressure notifications while active voting on the ballot gateway continues uninterrupted.
+- **Graceful Degradation**: If the SMS provider experiences latency spikes, verification requests are rate-limited and retried while the ballot gateway remains isolated.

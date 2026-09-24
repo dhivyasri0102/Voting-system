@@ -11,7 +11,6 @@ export const AdminSystemHealth: React.FC = () => {
   const [healthData, setHealthData] = useState<any>(null);
   const [metricsData, setMetricsData] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
-  const [selectedUidaiMode, setSelectedUidaiMode] = useState<string>('unconfigured');
   const [modeMessage, setModeMessage] = useState<string | null>(null);
 
   const fetchHealth = async () => {
@@ -23,7 +22,7 @@ export const AdminSystemHealth: React.FC = () => {
         setHealthData(data);
       }
 
-      const metRes = await fetch('/api/v1/monitoring/metrics');
+      const metRes = await fetch('/api/v1/metrics');
       if (metRes.ok) {
         const text = await metRes.text();
         setMetricsData(text);
@@ -38,25 +37,6 @@ export const AdminSystemHealth: React.FC = () => {
   useEffect(() => {
     fetchHealth();
   }, []);
-
-  const handleUpdateUidaiMode = async (mode: string) => {
-    setSelectedUidaiMode(mode);
-    try {
-      const res = await fetch('/api/v1/monitoring/uidai-mode', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${adminSession?.token}`,
-        },
-        body: JSON.stringify({ mode }),
-      });
-      const data = await res.json();
-      setModeMessage(data.message);
-      fetchHealth();
-    } catch (err) {
-      setModeMessage('Error updating UIDAI simulation mode');
-    }
-  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -115,7 +95,7 @@ export const AdminSystemHealth: React.FC = () => {
         <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-2">
           <div className="flex items-center justify-between">
             <span className="font-bold text-slate-800 text-sm flex items-center space-x-2">
-              <Server className="w-4 h-4 text-blue-600" />
+              <Server className="w-4 h-4 text-emerald-600" />
               <span>Backend API</span>
             </span>
             {getStatusBadge(healthData?.components?.backend || 'HEALTHY')}
@@ -127,7 +107,7 @@ export const AdminSystemHealth: React.FC = () => {
         <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-2">
           <div className="flex items-center justify-between">
             <span className="font-bold text-slate-800 text-sm flex items-center space-x-2">
-              <Database className="w-4 h-4 text-indigo-600" />
+              <Database className="w-4 h-4 text-amber-600" />
               <span>PostgreSQL Database</span>
             </span>
             {getStatusBadge(healthData?.components?.database || 'HEALTHY')}
@@ -159,44 +139,25 @@ export const AdminSystemHealth: React.FC = () => {
           <p className="text-xs text-slate-500">Consensus nodes maintaining the tamper-proof ledger.</p>
         </div>
 
-        {/* UIDAI Integration */}
+        {/* SMS Gateway */}
         <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
             <span className="font-bold text-slate-800 text-sm flex items-center space-x-2">
               <Activity className="w-4 h-4 text-amber-600" />
-              <span>UIDAI Aadhaar Gateway</span>
+              <span>SMS OTP Gateway</span>
             </span>
-            {getStatusBadge(healthData?.components?.uidai || 'NOT CONFIGURED')}
+            {getStatusBadge(healthData?.components?.smsGateway || 'NOT CONFIGURED')}
           </div>
           <p className="text-xs text-slate-500">
-            Aadhaar 2.5 Auth API. Strictly reports NOT CONFIGURED when credentials are unconfigured.
+            Twilio or Fast2SMS delivery. Reports NOT CONFIGURED until provider credentials are supplied.
           </p>
-          <div className="pt-2 border-t border-slate-100 flex items-center space-x-1.5 text-xs">
-            <span className="text-[11px] text-slate-500">Mode:</span>
-            <button
-              onClick={() => handleUpdateUidaiMode('unconfigured')}
-              className={`px-2 py-1 rounded text-[10px] font-bold ${
-                selectedUidaiMode === 'unconfigured' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600'
-              }`}
-            >
-              Unconfigured
-            </button>
-            <button
-              onClick={() => handleUpdateUidaiMode('sandbox')}
-              className={`px-2 py-1 rounded text-[10px] font-bold ${
-                selectedUidaiMode === 'sandbox' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'
-              }`}
-            >
-              Sandbox Sim
-            </button>
-          </div>
         </div>
 
         {/* Electoral Roll */}
         <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-2">
           <div className="flex items-center justify-between">
             <span className="font-bold text-slate-800 text-sm flex items-center space-x-2">
-              <Activity className="w-4 h-4 text-blue-600" />
+              <Activity className="w-4 h-4 text-emerald-600" />
               <span>ECI Electoral Roll</span>
             </span>
             {getStatusBadge(healthData?.components?.electoralRoll || 'NOT CONFIGURED')}

@@ -66,11 +66,11 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="text-xs font-semibold px-2 py-0.5 rounded bg-blue-900/60 text-blue-200 border border-blue-700/50 uppercase tracking-wide">
+                <span className="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-900/60 text-emerald-200 border border-emerald-700/50 uppercase tracking-wide">
                   GOV.IN • ECI
                 </span>
                 <span className="text-xs text-slate-400">
-                  Secured by Hyperledger Fabric & UIDAI AUA Architecture
+                  Secured by Hyperledger Fabric & SMS OTP authentication
                 </span>
               </div>
               <h1 className="text-lg sm:text-xl font-bold tracking-tight text-white mt-0.5">
@@ -105,7 +105,7 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={toggleLanguage}
               className="px-3 py-1.5 text-xs font-semibold rounded-md bg-slate-800 text-slate-200 border border-slate-700 hover:bg-slate-700 flex items-center space-x-1.5 transition-colors"
             >
-              <Globe className="w-3.5 h-3.5 text-blue-400" />
+              <Globe className="w-3.5 h-3.5 text-emerald-400" />
               <span>{accessibility.language === 'en' ? 'தமிழ் (Tamil)' : 'English'}</span>
             </button>
 
@@ -126,9 +126,9 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="text-slate-300">Ledger:</span>
               <span className="text-emerald-400 font-mono font-medium">Synced</span>
               <span className="text-slate-600">|</span>
-              <span className="text-slate-300">UIDAI:</span>
-              <span className={health?.uidai === 'HEALTHY' ? 'text-emerald-400' : 'text-amber-400'}>
-                {health?.uidai === 'HEALTHY' ? 'Live' : 'Standby/Test'}
+              <span className="text-slate-300">SMS OTP:</span>
+              <span className={health?.smsGateway === 'HEALTHY' ? 'text-emerald-400' : 'text-amber-400'}>
+                {health?.smsGateway === 'HEALTHY' ? 'Live' : 'Not configured'}
               </span>
             </div>
           </div>

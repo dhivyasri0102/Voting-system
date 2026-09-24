@@ -12,13 +12,15 @@ export const VoterConfirmation: React.FC = () => {
   const isTamil = accessibility.language === 'ta';
   const [copied, setCopied] = useState<boolean>(false);
 
-  const receipt = voterSession?.lastVoteReceipt || {
-    transactionReference: '0x8f3c...b129',
-    blockIndex: 108,
-    blockHash: '0x7e29...92fa',
-    timestamp: new Date().toISOString(),
-    electionId: 'ELEC-2026-CHENN-01',
-  };
+  const receipt = voterSession?.lastVoteReceipt;
+
+  if (!receipt) {
+    return (
+      <div className="max-w-2xl mx-auto p-6 text-center text-slate-600">
+        {isTamil ? 'வாக்கு ரசீது கிடைக்கவில்லை.' : 'No vote receipt is available.'}
+      </div>
+    );
+  }
 
   const handleCopy = () => {
     navigator.clipboard.writeText(receipt.transactionReference);
