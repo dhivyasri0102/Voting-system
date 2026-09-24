@@ -92,7 +92,11 @@ export const VoterConfirmation: React.FC = () => {
           </div>
 
           <div className="pt-2 border-t border-slate-200/80 text-[11px] text-slate-500">
-            <strong>Token Status:</strong> Anonymous credential marked CONSUMED. Cannot be re-used for duplicate voting.
+            {/* ✅ BUG FIX: Translate token status text */}
+            <strong>{isTamil ? 'டோக்கன் நிலை:' : 'Token Status:'}</strong>{' '}
+            {isTamil
+              ? 'அநாமதேய டோக்கன் பயன்படுத்தப்பட்டது. இரட்டை வாக்கு தடுக்கப்பட்டுள்ளது.'
+              : 'Anonymous credential marked CONSUMED. Cannot be re-used for duplicate voting.'}
           </div>
         </div>
 

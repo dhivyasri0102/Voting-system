@@ -20,6 +20,7 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const t = translations[accessibility.language];
 
+  // ✅ BUG FIX: Use same logic as AuthContext.toggleLanguage for consistency
   const toggleLanguage = () => {
     setAccessibility((prev) => ({
       ...prev,
@@ -32,17 +33,36 @@ export const Header: React.FC<HeaderProps> = ({
       ...prev,
       seniorCitizenMode: !prev.seniorCitizenMode,
       fontSize: !prev.seniorCitizenMode ? 'extra-large' : 'normal',
-      highContrast: !prev.seniorCitizenMode ? true : false,
+      highContrast: !prev.seniorCitizenMode,
     }));
   };
 
+  // ✅ VOICE FIX: Wait for async voice loading before speaking Tamil
   const speakText = (text: string) => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = accessibility.language === 'ta' ? 'ta-IN' : 'en-IN';
-      utterance.rate = 0.9;
-      window.speechSynthesis.speak(utterance);
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = accessibility.language === 'ta' ? 'ta-IN' : 'en-IN';
+    u.rate = 0.9;
+
+    const doSpeak = () => {
+      if (accessibility.language === 'ta') {
+        const voices = window.speechSynthesis.getVoices();
+        const tamilVoice = voices.find((v) => v.lang.startsWith('ta'));
+        if (tamilVoice) u.voice = tamilVoice;
+      }
+      window.speechSynthesis.speak(u);
+    };
+
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length > 0) {
+      doSpeak();
+    } else {
+      window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.onvoiceschanged = null;
+        doSpeak();
+      };
     }
   };
 

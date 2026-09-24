@@ -198,7 +198,11 @@ export const VoterBallotReview: React.FC = () => {
             className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-extrabold shadow-lg hover:shadow-emerald-600/20 transition-all flex items-center justify-center space-x-2"
           >
             <Vote className="w-4 h-4" />
-            <span>{loading ? 'Recording Ballot...' : isTamil ? 'வாக்கை உறுதி செய்க' : 'Confirm & Cast Vote'}</span>
+            {/* ✅ BUG FIX: Translate loading text to Tamil when Tamil mode active */}
+            <span>{loading
+              ? (isTamil ? 'வாக்கு பதிவு செய்கிறது...' : 'Recording Ballot...')
+              : (isTamil ? 'வாக்கை உறுதி செய்க' : 'Confirm & Cast Vote')
+            }</span>
           </button>
         </div>
       </div>

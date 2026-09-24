@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ShieldCheck, Lock, Vote, FileCheck, CheckCircle2,
-  Globe, Eye, Volume2, ArrowRight, ShieldAlert, Zap,
+  Globe, Eye, Volume2, ArrowRight, Zap,
   Users, BarChart3
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.js';
@@ -28,13 +28,32 @@ export const LandingPage: React.FC = () => {
 
   const isTamil = accessibility.language === 'ta';
 
+  // ✅ VOICE FIX: Wait for async browser voice loading before Tamil TTS
   const speakText = (text: string) => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = isTamil ? 'ta-IN' : 'en-IN';
-      utterance.rate = 0.9;
-      window.speechSynthesis.speak(utterance);
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = isTamil ? 'ta-IN' : 'en-IN';
+    u.rate = isTamil ? 0.85 : 0.9;
+
+    const doSpeak = () => {
+      if (isTamil) {
+        const voices = window.speechSynthesis.getVoices();
+        const tamilVoice = voices.find((v) => v.lang.startsWith('ta'));
+        if (tamilVoice) u.voice = tamilVoice;
+      }
+      window.speechSynthesis.speak(u);
+    };
+
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length > 0) {
+      doSpeak();
+    } else {
+      window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.onvoiceschanged = null;
+        doSpeak();
+      };
     }
   };
 
@@ -80,12 +99,12 @@ export const LandingPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-stone-50 flex flex-col font-sans">
 
-      {/* Top Accessibility & Language Bar */}
-      <div className="bg-stone-900 text-stone-200 border-b border-stone-800 text-xs py-2 px-4">
+      {/* ✅ UI FIX: Light theme top accessibility bar (was dark bg-stone-900) */}
+      <div className="bg-white text-stone-700 border-b border-stone-200 text-xs py-2 px-4 shadow-sm">
         <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center space-x-2">
-            <span className="inline-block w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-            <span className="font-semibold tracking-wider text-stone-300 uppercase text-[11px]">
+            <span className="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            <span className="font-semibold tracking-wider text-stone-600 uppercase text-[11px]">
               {isTamil
                 ? 'இந்திய தேர்தல் ஆணையம் • அதிகாரப்பூர்வ தேசிய தளம்'
                 : 'Election Commission of India • Official National E-Voting Portal'}
@@ -103,10 +122,10 @@ export const LandingPage: React.FC = () => {
                     : 'Blockchain-Based Automated and Privacy-Preserving E-Voting System. Please proceed to Citizen Voter Login.'
                 )
               }
-              className="hover:text-white flex items-center space-x-1 transition-colors"
+              className="hover:text-stone-900 flex items-center space-x-1 transition-colors"
               title="Text to Speech"
             >
-              <Volume2 className="w-3.5 h-3.5 text-amber-400" />
+              <Volume2 className="w-3.5 h-3.5 text-amber-600" />
               <span>{isTamil ? 'ஒலி உதவி' : 'Screen Reader'}</span>
             </button>
 
@@ -119,22 +138,22 @@ export const LandingPage: React.FC = () => {
                   highContrast: !prev.highContrast,
                 }))
               }
-              className={`px-2 py-0.5 rounded text-[11px] font-medium border ${
+              className={`px-2 py-0.5 rounded text-[11px] font-medium border transition-colors ${
                 accessibility.highContrast
                   ? 'bg-amber-400 text-stone-950 border-amber-300 font-bold'
-                  : 'border-stone-700 hover:border-stone-500'
+                  : 'border-stone-400 text-stone-600 hover:border-stone-600'
               }`}
             >
               {isTamil ? 'உயர் மாறுபாடு' : 'High Contrast'}
             </button>
 
             {/* Font Size controls */}
-            <div className="flex items-center space-x-1 border-l border-stone-700 pl-2">
+            <div className="flex items-center space-x-1 border-l border-stone-300 pl-2">
               <button
                 id="font-normal-btn"
                 onClick={() => setAccessibility((prev) => ({ ...prev, fontSize: 'normal' }))}
-                className={`px-1.5 py-0.5 rounded text-[11px] ${
-                  accessibility.fontSize === 'normal' ? 'bg-green-700 text-white' : 'hover:text-white'
+                className={`px-1.5 py-0.5 rounded text-[11px] transition-colors ${
+                  accessibility.fontSize === 'normal' ? 'bg-green-700 text-white' : 'text-stone-600 hover:text-stone-900'
                 }`}
               >
                 A
@@ -142,8 +161,8 @@ export const LandingPage: React.FC = () => {
               <button
                 id="font-large-btn"
                 onClick={() => setAccessibility((prev) => ({ ...prev, fontSize: 'large' }))}
-                className={`px-1.5 py-0.5 rounded text-[11px] font-bold ${
-                  accessibility.fontSize === 'large' ? 'bg-green-700 text-white' : 'hover:text-white'
+                className={`px-1.5 py-0.5 rounded text-[11px] font-bold transition-colors ${
+                  accessibility.fontSize === 'large' ? 'bg-green-700 text-white' : 'text-stone-600 hover:text-stone-900'
                 }`}
               >
                 A+
@@ -151,8 +170,8 @@ export const LandingPage: React.FC = () => {
               <button
                 id="font-xl-btn"
                 onClick={() => setAccessibility((prev) => ({ ...prev, fontSize: 'extra-large' }))}
-                className={`px-1.5 py-0.5 rounded text-[11px] font-black ${
-                  accessibility.fontSize === 'extra-large' ? 'bg-green-700 text-white' : 'hover:text-white'
+                className={`px-1.5 py-0.5 rounded text-[11px] font-black transition-colors ${
+                  accessibility.fontSize === 'extra-large' ? 'bg-green-700 text-white' : 'text-stone-600 hover:text-stone-900'
                 }`}
               >
                 A++
@@ -163,7 +182,7 @@ export const LandingPage: React.FC = () => {
             <button
               id="lang-switch-btn"
               onClick={toggleLanguage}
-              className="flex items-center space-x-1 px-2.5 py-0.5 rounded bg-amber-600 hover:bg-amber-500 text-white font-semibold transition-colors"
+              className="flex items-center space-x-1 px-2.5 py-0.5 rounded bg-amber-600 hover:bg-amber-700 text-white font-semibold transition-colors"
             >
               <Globe className="w-3.5 h-3.5" />
               <span>{isTamil ? 'English' : 'தமிழ்'}</span>
@@ -172,28 +191,28 @@ export const LandingPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Hero Header */}
-      <header className="bg-gradient-to-br from-stone-900 via-stone-800 to-stone-900 text-white border-b border-stone-700 shadow-lg">
+      {/* ✅ UI FIX: Light theme hero header (was dark stone-900 gradient) */}
+      <header className="bg-white border-b border-stone-200 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-10 sm:py-14 text-center">
           {/* India tricolour accent strip */}
           <div className="flex justify-center mb-6">
-            <div className="flex rounded-full overflow-hidden shadow-lg border border-stone-700">
+            <div className="flex rounded-full overflow-hidden shadow border border-stone-200">
               <div className="w-8 h-1.5 bg-amber-500" />
-              <div className="w-8 h-1.5 bg-white/90" />
+              <div className="w-8 h-1.5 bg-white border-t border-b border-stone-200" />
               <div className="w-8 h-1.5 bg-green-600" />
             </div>
           </div>
 
-          <div className="inline-flex items-center justify-center p-3 bg-green-900/30 rounded-2xl border border-green-500/20 mb-5">
-            <ShieldCheck className="w-10 h-10 text-green-400" />
+          <div className="inline-flex items-center justify-center p-3 bg-green-50 rounded-2xl border border-green-200 mb-5">
+            <ShieldCheck className="w-10 h-10 text-green-600" />
           </div>
 
-          <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight max-w-3xl mx-auto leading-snug">
+          <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight max-w-3xl mx-auto leading-snug text-stone-900">
             {isTamil
               ? 'பிளாக்செயின் அடிப்படையிலான தானியங்கி மற்றும் தனியுரிமை பாதுகாக்கப்பட்ட மின்னணு வாக்குப்பதிவு அமைப்பு'
               : 'Blockchain-Based Automated and Privacy-Preserving E-Voting System'}
           </h1>
-          <p className="mt-3 text-sm sm:text-base text-stone-300 max-w-2xl mx-auto">
+          <p className="mt-3 text-sm sm:text-base text-stone-600 max-w-2xl mx-auto">
             {isTamil
               ? 'அங்கீகரிக்கப்பட்ட குடிமக்களுக்கான ரகசிய வாக்குரிமை மற்றும் சுயாதீன கணக்காய்வுத்திறன் கொண்ட தேசிய வாக்குப்பதிவு தளம்.'
               : 'Cryptographically verified citizen suffrage featuring zero voter-candidate linkage and end-to-end immutability.'}
@@ -201,9 +220,9 @@ export const LandingPage: React.FC = () => {
 
           {/* System Health Indicator */}
           {systemHealth && (
-            <div className="mt-4 inline-flex items-center space-x-2 px-3 py-1.5 rounded-full bg-green-900/40 border border-green-500/30 text-xs">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-              <span className="text-green-300 font-medium">
+            <div className="mt-4 inline-flex items-center space-x-2 px-3 py-1.5 rounded-full bg-green-50 border border-green-200 text-xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+              <span className="text-green-700 font-medium">
                 {isTamil ? 'அமைப்பு செயல்படுகிறது' : 'System Operational'}
               </span>
             </div>
@@ -211,35 +230,35 @@ export const LandingPage: React.FC = () => {
 
           {/* VOTER PORTAL ENTRY CARD */}
           <div className="mt-8 max-w-md mx-auto text-left">
-            <div className="bg-stone-800/90 border border-stone-700 rounded-2xl p-6 sm:p-8 flex flex-col justify-between hover:border-green-400/60 transition-all shadow-2xl hover:shadow-green-500/10 group">
+            <div className="bg-white border-2 border-stone-200 rounded-2xl p-6 sm:p-8 flex flex-col justify-between hover:border-green-400 transition-all shadow-md hover:shadow-lg group">
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <div className="p-2.5 rounded-xl bg-green-700/20 text-green-400 border border-green-600/30">
+                  <div className="p-2.5 rounded-xl bg-green-50 text-green-600 border border-green-200">
                     <Vote className="w-7 h-7" />
                   </div>
-                  <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-green-950/60 text-green-300 border border-green-800">
+                  <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-green-100 text-green-800 border border-green-200">
                     {isTamil ? 'வாக்காளர் தளம்' : 'Citizen Voter'}
                   </span>
                 </div>
-                <h2 className="text-xl font-bold text-white">
+                <h2 className="text-xl font-bold text-stone-900">
                   {isTamil ? 'வாக்காளர் உள்நுழைவு' : 'Voter Login'}
                 </h2>
-                <p className="text-xs sm:text-sm text-stone-300 mt-2 leading-relaxed">
+                <p className="text-xs sm:text-sm text-stone-600 mt-2 leading-relaxed">
                   {isTamil
                     ? 'வாக்காளர் அடையாள அட்டை (EPIC) மற்றும் மொபைல் OTP வழியாக அங்கீகரித்து பாதுகாப்பாக வாக்களிக்கும் பொதுத்தளம்.'
                     : 'Authenticate with Voter ID (EPIC) and Mobile OTP to receive an isolated anonymous voting credential.'}
                 </p>
-                <div className="mt-5 space-y-2 text-xs text-stone-300">
+                <div className="mt-5 space-y-2 text-xs text-stone-600">
                   <div className="flex items-center space-x-2">
-                    <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
                     <span>{isTamil ? 'ஒரே முறை அநாமதேய டோக்கன்' : 'Single-use anonymous token'}</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
                     <span>{isTamil ? 'அடையாளம் & வாக்கு பிரிக்கப்பட்டுள்ளது' : 'Zero linkage between identity & ballot'}</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
                     <span>{isTamil ? 'மொபைல் OTP சரிபார்ப்பு' : 'Mobile OTP verification (Free tier)'}</span>
                   </div>
                 </div>
@@ -248,7 +267,7 @@ export const LandingPage: React.FC = () => {
               <button
                 id="voter-login-btn"
                 onClick={() => navigate('/voter/login')}
-                className="mt-6 w-full py-3.5 px-4 rounded-xl bg-green-600 hover:bg-green-500 text-white text-sm font-bold flex items-center justify-center space-x-2 transition-all shadow-md group-hover:bg-green-500"
+                className="mt-6 w-full py-3.5 px-4 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-bold flex items-center justify-center space-x-2 transition-all shadow-sm group-hover:shadow-md"
               >
                 <span>{isTamil ? 'வாக்காளர் உள்நுழைவு' : 'Voter Login'}</span>
                 <ArrowRight className="w-4 h-4" />
@@ -300,7 +319,7 @@ export const LandingPage: React.FC = () => {
                   {new Date(elections[0].startTime).toLocaleDateString()} — {new Date(elections[0].endTime).toLocaleDateString()}
                 </p>
                 <p className="text-stone-600 mt-0.5">
-                  {new Date(elections[0].startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} to{' '}
+                  {new Date(elections[0].startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} {isTamil ? 'முதல்' : 'to'}{' '}
                   {new Date(elections[0].endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </p>
               </div>
@@ -376,13 +395,13 @@ export const LandingPage: React.FC = () => {
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="bg-stone-900 text-stone-400 text-xs py-6 border-t border-stone-800">
+      {/* ✅ UI FIX: Light theme footer (was dark bg-stone-900) */}
+      <footer className="bg-white text-stone-500 text-xs py-6 border-t border-stone-200">
         <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p>
             © 2026 {isTamil ? 'இந்திய தேர்தல் ஆணையம்' : 'Election Commission of India'}. All Rights Reserved.
           </p>
-          <div className="flex items-center space-x-4 text-stone-500">
+          <div className="flex items-center space-x-4 text-stone-400">
             <span>ISO/IEC 27001 Certified</span>
             <span>•</span>
             <span>Hyperledger Fabric v2.5</span>
