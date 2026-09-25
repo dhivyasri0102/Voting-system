@@ -64,9 +64,14 @@ export class AnonymousCredentialService {
     reason?: string;
     credential?: VotingCredential;
   } {
+    const hashPrefix = credentialHash ? `${credentialHash.slice(0, 8)}...` : 'undefined';
+    console.log(`[AnonymousCredentialService] Validating credential prefix [${hashPrefix}] for election [${electionId}]`);
+
+    const cred = this.credentials.get(credentialHash);
     const cred = DataStoreService.getCredential(credentialHash);
 
     if (!cred) {
+      console.warn(`[AnonymousCredentialService] Hash [${hashPrefix}] not found in credential registry. Registered total: ${this.credentials.size}`);
       return { isValid: false, reason: 'Invalid or unrecognized voting credential hash.' };
     }
 
