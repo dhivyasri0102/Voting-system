@@ -371,7 +371,7 @@ export const LandingPage: React.FC = () => {
             {[
               { label: 'Solidity Smart Contract', sub: 'EVM ^0.8.34 Osaka' },
               { label: 'Cyber Defense', sub: 'Pausable & RBAC Shield' },
-              { label: 'SMS OTP Gateway', sub: 'Twilio / Fast2SMS' },
+              { label: 'SMS OTP Gateway', sub: 'Twilio' },
               { label: 'Keccak-256 + ZK', sub: 'Nullifier Privacy Core' },
             ].map((tech, i) => (
               <div key={i} className="p-3 bg-stone-50 rounded-xl border border-stone-100 text-center">
@@ -390,7 +390,7 @@ export const LandingPage: React.FC = () => {
           <p>
             {isTamil
               ? 'இந்த தளம் இந்திய தேர்தல் ஆணையத்தின் வழிகாட்டுதலின் கீழ், வாக்காளர்களின் அரசியலமைப்பு உரிமைகளைப் பாதுகாக்கும் நோக்குடன் உருவாக்கப்பட்டுள்ளது. வாக்காளர்கள் தங்கள் வாக்காளர் அடையாள அட்டை மற்றும் மொபைல் OTP வழியாக பாதுகாப்பாகவும் ரகசியமாகவும் வாக்களிக்கும் வசதியை இது உறுதி செய்கிறது.'
-              : 'Developed strictly under statutory constitutional guidelines of the Election Commission of India. The architecture maintains end-to-end cryptographically secured voting using free-tier SMS OTP (Twilio/Fast2SMS), ensuring verified citizens exercise their franchise with total privacy and anonymity.'}
+              : 'Developed strictly under statutory constitutional guidelines of the Election Commission of India. The architecture maintains end-to-end cryptographically secured voting using Twilio SMS OTP, ensuring verified citizens exercise their franchise with total privacy and anonymity.'}
           </p>
         </section>
       </main>

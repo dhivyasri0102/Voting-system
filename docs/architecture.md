@@ -9,7 +9,7 @@ The **National Privacy-Preserving E-Voting Architecture** is an enterprise-grade
 │                         IDENTITY DOMAIN (ECI / SMS OTP)                       │
 │                                                                                 │
 │   Voter EPIC Entry  ──►  Electoral Roll Check  ──►  Mobile SMS OTP             │
-│   (ABC1234567)           (Constituency Valid)      (Twilio / Fast2SMS)          │
+│   (ABC1234567)           (Constituency Valid)      (Twilio)                    │
 │                                                                                 │
 │                                      │ Verified                                 │
 │                                      ▼                                          │

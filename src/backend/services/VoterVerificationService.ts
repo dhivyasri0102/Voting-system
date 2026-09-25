@@ -6,7 +6,7 @@
  * 
  * Enforces:
  * 1. Voter ID lookup from persistent Electoral Roll (DataStoreService)
- * 2. Real SMS OTP generation and dispatch via SmsService (Twilio / Fast2SMS / Console)
+ * 2. Real SMS OTP generation and dispatch via SmsService (Twilio)
  * 3. 2-minute OTP expiry, 3-attempt limit, and 30-second resend cooldown
  * 4. Electoral eligibility verification (ACTIVE status, constituency match, OPEN election, no prior vote)
  * 5. One-time anonymous voting credential issuance with strict identity-ballot separation

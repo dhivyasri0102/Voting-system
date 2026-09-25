@@ -1,15 +1,13 @@
 /**
- * Free-Tier SMS Gateway Service for Citizen Verification
+ * Twilio SMS Gateway Service for Citizen Verification
  * 
- * Supports:
- * 1. Twilio (Free Trial Account): TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_PHONE_NUMBER
- * 2. Fast2SMS (Free Tier for India): FAST2SMS_API_KEY
- * 3. Local Development Mode: Formatted console output with simulated dispatch
+ * Twilio credentials: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_PHONE_NUMBER
+ * Local development mode remains available when Twilio credentials are not configured.
  */
 
 export interface SmsDispatchResult {
   success: boolean;
-  provider: 'TWILIO' | 'FAST2SMS' | 'DEVELOPMENT_SIMULATOR';
+  provider: 'TWILIO' | 'DEVELOPMENT_SIMULATOR';
   messageId?: string;
   debugOtp?: string; // Only included in non-production environments
   error?: string;
@@ -23,7 +21,7 @@ export class SmsService {
     const cleanNumber = mobileNumber.replace(/\D/g, '');
     const message = `Election Commission of India: Your OTP for voter authentication is ${otp}. Valid for 2 minutes. Do not share with anyone. - ECI`;
 
-    // 1. Try Twilio if credentials are provided
+    // Send through Twilio when server credentials are configured.
     const twilioSid = process.env.TWILIO_ACCOUNT_SID;
     const twilioAuth = process.env.TWILIO_AUTH_TOKEN;
     const twilioFrom = process.env.TWILIO_FROM_PHONE_NUMBER;
@@ -57,46 +55,14 @@ export class SmsService {
           };
         } else {
           const errData = await res.text();
-          console.warn(`[SMS-TWILIO] Failed, falling back to simulator:`, errData);
+          console.warn(`[SMS-TWILIO] Failed:`, errData);
         }
       } catch (err) {
         console.warn(`[SMS-TWILIO] Error:`, err);
       }
     }
 
-    // 2. Try Fast2SMS if API key is provided
-    const fast2smsKey = process.env.FAST2SMS_API_KEY;
-    if (fast2smsKey) {
-      try {
-        const indian10Digit = cleanNumber.slice(-10);
-        const res = await fetch('https://www.fast2sms.com/dev/bulkV2', {
-          method: 'POST',
-          headers: {
-            authorization: fast2smsKey,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            route: 'otp',
-            variables_values: otp,
-            numbers: indian10Digit,
-          }),
-        });
-
-        if (res.ok) {
-          const data: any = await res.json();
-          console.log(`[SMS-FAST2SMS] Live OTP sent to ${mobileNumber.slice(-4).padStart(mobileNumber.length, '*')}.`);
-          return {
-            success: true,
-            provider: 'FAST2SMS',
-            messageId: data.request_id || 'FAST2SMS-OK',
-          };
-        }
-      } catch (err) {
-        console.warn(`[SMS-FAST2SMS] Error:`, err);
-      }
-    }
-
-    // 3. Development / Demo Mode Output
+    // Development / Demo Mode Output
     const maskedMobile = mobileNumber.length >= 4 
       ? mobileNumber.slice(-4).padStart(mobileNumber.length, '•') 
       : '••••';

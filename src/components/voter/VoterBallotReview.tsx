@@ -231,7 +231,7 @@ export const VoterBallotReview: React.FC = () => {
           <span>
             {isTanglish
               ? "Ungal vote anonymous cryptographic proof-aa register aagum. Identity link irukadhu."
-              : 'Your vote is transmitted anonymously. Zero record links your identity (EPIC/Aadhaar) to this candidate choice.'}
+              : 'Your vote is transmitted anonymously. Zero record links your EPIC identity to this candidate choice.'}
             {isTamil
               ? 'உங்கள் வாக்கு அநாமதேய குறியீடாக மட்டுமே சங்கிலியில் பதிவு செய்யப்படும்; உங்கள் அடையாளத்துடன் இணைக்கப்படாது.'
               : 'Your vote is transmitted anonymously. No record links your EPIC identity to this candidate choice.'}

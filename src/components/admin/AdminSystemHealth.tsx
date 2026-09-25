@@ -149,7 +149,7 @@ export const AdminSystemHealth: React.FC = () => {
             {getStatusBadge(healthData?.components?.smsGateway || 'NOT CONFIGURED')}
           </div>
           <p className="text-xs text-slate-500">
-            Twilio or Fast2SMS delivery. Reports NOT CONFIGURED until provider credentials are supplied.
+            Twilio delivery. Configure Twilio credentials for live OTP messages.
           </p>
         </div>
 

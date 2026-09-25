@@ -21,8 +21,6 @@ import { TallyService } from '../services/TallyService.js';
 import { AuditService } from '../services/AuditService.js';
 import { SecurityMonitoringService } from '../services/SecurityMonitoringService.js';
 import { AuthService } from '../services/AuthService.js';
-import { UIDAIConfiguration } from '../integrations/uidai/UIDAIConfiguration.js';
-import { UidaiGatewayService } from '../services/UidaiGatewayService.js';
 import { DataStoreService } from '../services/DataStoreService.js';
 import { SolidityBlockchainManager } from '../services/SolidityBlockchainManager.js';
 
@@ -913,52 +911,7 @@ router.get('/metrics', (req: Request, res: Response) => {
 });
 
 // ==========================================
-// 10. UIDAI OFFICIAL GATEWAY ENDPOINTS
-// ==========================================
-
-router.get('/verification/uidai/status', (req: Request, res: Response) => {
-  const status = UidaiGatewayService.getStatus();
-  res.json(status);
-});
-
-router.post(['/verification/uidai/otp/request', '/verification/aadhaar/otp/request'], async (req: Request, res: Response) => {
-  const { aadhaar_number, aadhaarNumber, user_consent, userConsent, voter_id, voterId } = req.body;
-  const ip = req.ip || '127.0.0.1';
-
-  const result = await UidaiGatewayService.requestOtp({
-    aadhaarNumber: aadhaar_number || aadhaarNumber,
-    userConsent: user_consent ?? userConsent ?? false,
-    voterId: voter_id || voterId,
-    ipAddress: ip,
-  });
-
-  return res.status(result.statusCode).json(result);
-});
-
-router.post(['/verification/uidai/otp/verify', '/verification/aadhaar/otp/verify'], async (req: Request, res: Response) => {
-  const { transaction_id, transactionId, otp } = req.body;
-  const ip = req.ip || '127.0.0.1';
-
-  const result = await UidaiGatewayService.verifyOtp({
-    transactionId: transaction_id || transactionId,
-    otp,
-    ipAddress: ip,
-  });
-
-  return res.status(result.statusCode).json(result);
-});
-
-router.post('/verification/uidai/authenticate', async (req: Request, res: Response) => {
-  const { auth_reference, authReference, voter_id, voterId } = req.body;
-  const result = await UidaiGatewayService.authenticate({
-    authReference: auth_reference || authReference,
-    voterId: voter_id || voterId,
-  });
-  return res.json(result);
-});
-
-// ==========================================
-// 11. VOTER VOTING HISTORY (BALLOT SECRECY PRESERVED)
+// 10. VOTER VOTING HISTORY (BALLOT SECRECY PRESERVED)
 // ==========================================
 
 router.get('/voter/history/:voterId', (req: Request, res: Response) => {
@@ -1035,13 +988,20 @@ router.get('/admin/votes', (req: Request, res: Response) => {
       status: tx.status || 'COMMITTED',
       blockchainStatus: 'CONFIRMED',
     };
-// 12. MOBILE OTP ALIAS ENDPOINTS (Free-Tier SMS)
+  });
+
+  res.json({
+    totalBlocks: voteBlocks.length,
+    blocks: voteBlocks,
+  });
+});
+// 11. MOBILE OTP ALIAS ENDPOINTS (Twilio SMS)
 // ==========================================
 
 /**
  * POST /api/v1/verification/send-otp
  * Mobile number OTP dispatch (alias for /verification/otp/start)
- * Supports Twilio free-tier and Fast2SMS free-tier
+ * Uses Twilio credentials configured on the server.
  */
 router.post('/verification/send-otp', async (req: Request, res: Response) => {
   const { phone, voter_id } = req.body;
@@ -1138,11 +1098,6 @@ router.get('/voting/status', (req: Request, res: Response) => {
     voter_id: voterId.toUpperCase(),
     has_voted: hasVoted,
     status: hasVoted ? 'VOTE_RECORDED' : 'NOT_YET_VOTED',
-  });
-
-  res.json({
-    totalBlocks: voteBlocks.length,
-    blocks: voteBlocks,
   });
 });
 

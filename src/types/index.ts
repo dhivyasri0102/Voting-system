@@ -217,7 +217,6 @@ export interface VoterProfile {
   age?: number;
   address?: string;
   photo?: string;
-  maskedAadhaar?: string;
 }
 
 export interface VoteHistoryItem {

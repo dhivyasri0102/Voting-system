@@ -18,6 +18,7 @@ export const VoterCandidateSelect: React.FC = () => {
     registerVoiceHandler, 
     unregisterVoiceHandler 
   } = useOutletContext<VoterLayoutContext>();
+  const isTamil = accessibility.language === 'ta';
 
   const [election, setElection] = useState<Election | null>(null);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -54,6 +55,9 @@ export const VoterCandidateSelect: React.FC = () => {
         ? `Candidate number ${index + 1}, ${c.name} select aayiduchu. Party ${c.party || 'Independent'}. Next step-ku poga Next nu sollunga.`
         : `Candidate number ${index + 1}, ${c.name} selected. Party ${c.party || 'Independent'}. Say Next to proceed.`;
       speakText(msg, true);
+    }
+  }, [candidates, isTanglish, speakText]);
+
   // ✅ BUG FIX: Tamil narration — text is now translated when isTamil is active.
   // Also waits for async voice loading (Chrome returns empty array on first call).
   const speakCandidate = (c: Candidate) => {
@@ -88,7 +92,7 @@ export const VoterCandidateSelect: React.FC = () => {
         doSpeak();
       };
     }
-  }, [candidates, isTanglish, speakText]);
+  };
 
   const handleProceedToReview = useCallback(() => {
     if (!selectedCandidateId) {

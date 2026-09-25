@@ -22,7 +22,6 @@
 
 **Privacy Guarantee**:
 Notice what is NOT in this transaction:
-- NO Aadhaar number
 - NO Voter ID / EPIC
 - NO voter name, phone number, address, or biometric
 - NO plaintext candidate selection

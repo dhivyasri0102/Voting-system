@@ -19,7 +19,7 @@ import { useVoiceGuidance, VotingStep } from '../VoiceGuidance.js';
 // Map VoterLogin flowStage → VotingStep for voice guidance
 const STAGE_TO_VOICE: Record<string, VotingStep> = {
   VOTER_ID: 'VOTER_ID',
-  AADHAAR_ENTRY: 'AADHAAR',
+  PHONE_ENTRY: 'PHONE',
   OTP_ENTRY: 'OTP',
   AUTH_SUCCESS: 'CREDENTIAL',
 };
@@ -32,10 +32,6 @@ export const VoterLogin: React.FC = () => {
   const vg = useVoiceGuidance();
 
   const isTamil = accessibility.language === 'ta';
-
-  const [flowStage, setFlowStage] = useState<
-    'VOTER_ID' | 'AADHAAR_ENTRY' | 'OTP_ENTRY' | 'AUTH_SUCCESS'
-  >('VOTER_ID');
 
   // ── Speak guidance whenever the flow stage changes ──────────────────────────
   useEffect(() => {
@@ -58,21 +54,6 @@ export const VoterLogin: React.FC = () => {
     return () => vg.unregisterCommandHandler();
   }, [vg]);
 
-
-  const [voterIdInput, setVoterIdInput] =
-    useState<string>('TNL1029384');
-
-  const [aadhaarInput, setAadhaarInput] =
-    useState<string>('5432 9876 1238');
-
-  const [consentGiven, setConsentGiven] =
-    useState<boolean>(true);
-
-  const [otpInput, setOtpInput] =
-    useState<string>('123456');
-
-  const [otpTxId, setOtpTxId] =
-    useState<string | null>(null);
   const [flowStage, setFlowStage] = useState<FlowStage>('VOTER_ID');
 
   const [voterIdInput, setVoterIdInput] = useState<string>('');

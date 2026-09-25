@@ -28,7 +28,7 @@ export type VoiceLang = 'EN' | 'TANGLISH' | 'BOTH';
 
 export type VotingStep =
   | 'VOTER_ID'
-  | 'AADHAAR'
+  | 'PHONE'
   | 'OTP'
   | 'ELIGIBILITY'
   | 'CREDENTIAL'
@@ -50,9 +50,9 @@ const STEP_MESSAGES: Record<VotingStep, StepMessage> = {
     en: 'Please enter your Voter ID.',
     tanglish: 'Ungaloda Voter ID-ai enter pannunga.',
   },
-  AADHAAR: {
-    en: 'Please enter your Aadhaar number and give your consent.',
-    tanglish: 'Ungaloda Aadhaar number-ai enter pannunga, consent-ai confirm pannunga.',
+  PHONE: {
+    en: 'Please enter your registered mobile number and give your consent.',
+    tanglish: 'Ungaloda registered mobile number-ai enter pannunga, consent-ai confirm pannunga.',
   },
   OTP: {
     en: 'Please enter the OTP sent to your registered mobile number.',
@@ -132,6 +132,19 @@ interface VoiceGuidanceCtx {
 
 type CommandHandler = (cmd: string) => void;
 
+interface BrowserSpeechRecognition {
+  lang: string;
+  interimResults: boolean;
+  maxAlternatives: number;
+  continuous: boolean;
+  onstart: (() => void) | null;
+  onend: (() => void) | null;
+  onerror: (() => void) | null;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  start: () => void;
+  stop: () => void;
+}
+
 const VoiceGuidanceContext = createContext<VoiceGuidanceCtx | null>(null);
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
@@ -160,7 +173,7 @@ export const VoiceGuidanceProvider: React.FC<{ children: React.ReactNode }> = ({
   const [lastTranscript, setLastTranscript] = useState('');
 
   const lastTextRef = useRef('');
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
   const commandHandlerRef = useRef<CommandHandler | null>(null);
 
   // Persist prefs
@@ -246,7 +259,7 @@ export const VoiceGuidanceProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!SR) return;
 
     stop(); // stop speaking before listening
-    const rec = new SR() as SpeechRecognition;
+    const rec = new SR() as BrowserSpeechRecognition;
     recognitionRef.current = rec;
     rec.lang = 'en-IN';
     rec.interimResults = false;

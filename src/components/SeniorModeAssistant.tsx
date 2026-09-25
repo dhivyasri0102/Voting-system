@@ -22,8 +22,8 @@ const PAGES: PageDef[] = [
   },
   {
     path: '/voter/login',
-    label: 'Voter Login — Enter your Voter ID and Aadhaar OTP',
-    labelTa: 'வாக்காளர் உள்நுழைவு — உங்கள் வாக்காளர் அடையாள அட்டை மற்றும் ஆதார் OTP உள்ளிடுக',
+    label: 'Voter Login — Enter your Voter ID and mobile OTP',
+    labelTa: 'வாக்காளர் உள்நுழைவு — உங்கள் வாக்காளர் அடையாள அட்டை மற்றும் மொபைல் OTP உள்ளிடுக',
     keywords: ['login', 'voter login', 'sign in', 'authenticate', 'voter', 'உள்நுழைவு', 'வாக்காளர்'],
   },
   {
