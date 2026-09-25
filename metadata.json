@@ -1,6 +1,6 @@
 {
   "name": "National E-Voting Architecture & Privacy-Preserving Ledger",
-  "description": "A blockchain-backed, privacy-preserving automated electronic voting system featuring UIDAI Aadhaar architecture, anonymous voting credentials, tamper-evident audit trails, and accessibility.",
+  "description": "A blockchain-backed, privacy-preserving automated electronic voting system using EPIC voter ID, SMS OTP authentication, anonymous voting credentials, and tamper-evident audit trails.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

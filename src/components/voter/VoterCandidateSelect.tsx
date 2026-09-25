@@ -54,6 +54,39 @@ export const VoterCandidateSelect: React.FC = () => {
         ? `Candidate number ${index + 1}, ${c.name} select aayiduchu. Party ${c.party || 'Independent'}. Next step-ku poga Next nu sollunga.`
         : `Candidate number ${index + 1}, ${c.name} selected. Party ${c.party || 'Independent'}. Say Next to proceed.`;
       speakText(msg, true);
+  // ✅ BUG FIX: Tamil narration — text is now translated when isTamil is active.
+  // Also waits for async voice loading (Chrome returns empty array on first call).
+  const speakCandidate = (c: Candidate) => {
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+
+    // Build narration text in the active language
+    const text = isTamil
+      ? `வேட்பாளர்: ${c.name}. கட்சி: ${c.party || 'சுயேச்சை'}. சின்னம்: ${c.symbol || ''}. ${c.description || ''}`
+      : `Candidate: ${c.name}. Party: ${c.party || 'Independent'}. Symbol: ${c.symbol || ''}. ${c.description || ''}`;
+
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = isTamil ? 'ta-IN' : 'en-IN';
+    u.rate = isTamil ? 0.85 : 0.95;
+
+    const doSpeak = () => {
+      if (isTamil) {
+        const voices = window.speechSynthesis.getVoices();
+        const tamilVoice = voices.find((v) => v.lang.startsWith('ta'));
+        if (tamilVoice) u.voice = tamilVoice;
+      }
+      window.speechSynthesis.speak(u);
+    };
+
+    // Voices may not be loaded yet in Chrome
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length > 0) {
+      doSpeak();
+    } else {
+      window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.onvoiceschanged = null;
+        doSpeak();
+      };
     }
   }, [candidates, isTanglish, speakText]);
 
@@ -215,6 +248,7 @@ export const VoterCandidateSelect: React.FC = () => {
                   <div>
                     <div className="flex items-center space-x-2">
                       <span className="text-sm font-extrabold text-slate-900">{c.name}</span>
+                      {c.logo && <img src={c.logo} alt="" className="h-7 w-7 rounded object-contain border border-slate-200" />}
                       <span className="text-xs font-semibold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
                         {c.party || 'Independent'}
                       </span>

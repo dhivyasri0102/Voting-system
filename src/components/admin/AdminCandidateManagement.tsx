@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { fetchCandidates, addCandidate, editCandidate, disableCandidate } from '../../services/blockchain';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { 
   Users, PlusCircle, Edit, Ban, Eye, CheckCircle2, AlertCircle, 
   ArrowLeft, Search, ShieldCheck, FileText, Check, X
@@ -10,7 +9,8 @@ import { Candidate, Election, CandidateStatus, CandidateType } from '../../types
 
 export const AdminCandidateManagement: React.FC = () => {
   const { electionId } = useParams<{ electionId: string }>();
-  const { adminSession } = useAuth();
+  const navigate = useNavigate();
+  const { adminSession, logoutAdmin } = useAuth();
 
   const [election, setElection] = useState<Election | null>(null);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -31,6 +31,7 @@ export const AdminCandidateManagement: React.FC = () => {
   const [formType, setFormType] = useState<CandidateType>('Party');
   const [formSymbol, setFormSymbol] = useState<string>('');
   const [formPhoto, setFormPhoto] = useState<string>('');
+  const [formLogo, setFormLogo] = useState<string>('');
   const [formDescription, setFormDescription] = useState<string>('');
   const [formInformation, setFormInformation] = useState<string>('');
   const [formStatus, setFormStatus] = useState<CandidateStatus>('ACTIVE');
@@ -41,25 +42,47 @@ export const AdminCandidateManagement: React.FC = () => {
     setLoading(true);
     try {
       const elecRes = await fetch(`/api/v1/elections/${electionId}`);
-      if (elecRes.ok) {
-        const elecData = await elecRes.json();
-        setElection(elecData);
-      }
+      if (!elecRes.ok) throw new Error('Election not found. Create or select a valid election first.');
+      const elecData = await elecRes.json();
+      setElection(elecData);
 
-      const candidatesData = await fetchCandidates();
-        setCandidates(candidatesData);
+      const candidatesRes = await fetch(`/api/v1/elections/${electionId}/candidates`);
+      if (!candidatesRes.ok) throw new Error('Failed to load candidates');
+      setCandidates(await candidatesRes.json());
     } catch (err) {
       console.error('Failed to load election candidates', err);
+      setErrorMessage(err instanceof Error ? err.message : 'Unable to load election details.');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
+    if (!electionId) {
+      fetch('/api/v1/elections')
+        .then((response) => response.ok ? response.json() : [])
+        .then((elections) => {
+          if (elections[0]?.id) {
+            navigate(`/admin/elections/${elections[0].id}/candidates`, { replace: true });
+          } else {
+            setErrorMessage('No election exists yet. Create an election before adding candidates.');
+            setLoading(false);
+          }
+        })
+        .catch(() => {
+          setErrorMessage('Election service is unavailable. Start the backend and try again.');
+          setLoading(false);
+        });
+      return;
+    }
     fetchElectionAndCandidates();
-  }, [electionId]);
+  }, [electionId, navigate]);
 
   const openAddModal = () => {
+    if (!election) {
+      setErrorMessage('Create or select a valid election before adding candidates.');
+      return;
+    }
     const nextNum = (candidates.length + 1).toString().padStart(2, '0');
     setFormCandidateId(`CAND-${nextNum}`);
     setFormName('');
@@ -67,6 +90,7 @@ export const AdminCandidateManagement: React.FC = () => {
     setFormType('Party');
     setFormSymbol('');
     setFormPhoto('');
+    setFormLogo('');
     setFormDescription('');
     setFormInformation('');
     setFormStatus('ACTIVE');
@@ -82,6 +106,7 @@ export const AdminCandidateManagement: React.FC = () => {
     setFormType(c.candidateType || 'Party');
     setFormSymbol(c.symbol || '');
     setFormPhoto(c.photo || '');
+    setFormLogo(c.logo || '');
     setFormDescription(c.description || '');
     setFormInformation(c.information || '');
     setFormStatus(c.status || 'ACTIVE');
@@ -94,32 +119,65 @@ export const AdminCandidateManagement: React.FC = () => {
     setShowViewModal(true);
   };
 
+  const readImage = (file: File, setImage: (value: string) => void) => {
+    if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
+      setErrorMessage('Please select a PNG, JPEG, or WebP image.');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setErrorMessage('Each image must be smaller than 2 MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setImage(String(reader.result));
+    reader.onerror = () => setErrorMessage('Unable to read the selected image.');
+    reader.readAsDataURL(file);
+  };
+
   // Submit Add Candidate
   const handleAddCandidate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!electionId || !election) return;
+    if (!electionId || !election) {
+      setErrorMessage('Election details are still loading. Please try again.');
+      return;
+    }
     setSubmitting(true);
     setErrorMessage(null);
 
     try {
-      const tx = await addCandidate({
-        id: formCandidateId,
-        name: formName,
-        party: formType === 'Party' ? formParty : 'Independent',
-        candidateType: formType,
-        constituency: election?.constituency || '',
-        symbol: formSymbol,
-        photo: formPhoto,
-        description: formDescription,
-        information: formInformation,
-        status: formStatus,
+      const response = await fetch(`/api/v1/admin/elections/${electionId}/candidates`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${adminSession?.token}`,
+        },
+        body: JSON.stringify({
+          id: formCandidateId,
+          name: formName,
+          party: formType === 'Party' ? formParty : 'Independent',
+          candidate_type: formType,
+          constituency: election.constituency,
+          symbol: formSymbol,
+          photo: formPhoto,
+          logo: formLogo,
+          description: formDescription,
+          information: formInformation,
+          status: formStatus,
+        }),
       });
-      await tx.wait();
+      const result = await response.json().catch(() => ({}));
+      if (response.status === 401 || response.status === 403) {
+        logoutAdmin();
+        throw new Error('Your admin session has expired. Please sign in again.');
+      }
+      if (!response.ok) {
+        throw new Error(result.message || `Candidate creation failed (${response.status}).`);
+      }
       setStatusMessage(`Candidate ${formName} added successfully.`);
       setShowAddModal(false);
       fetchElectionAndCandidates();
     } catch (err) {
-      setErrorMessage('Failed to add candidate on blockchain.');
+      setErrorMessage(err instanceof Error ? err.message : 'Failed to add candidate.');
     } finally {
       setSubmitting(false);
     }
@@ -133,22 +191,30 @@ export const AdminCandidateManagement: React.FC = () => {
     setErrorMessage(null);
 
     try {
-      const tx = await editCandidate(selectedCandidate.id, {
-        name: formName,
-        party: formType === 'Party' ? formParty : 'Independent',
-        candidateType: formType,
-        symbol: formSymbol,
-        photo: formPhoto,
-        description: formDescription,
-        information: formInformation,
-        status: formStatus,
+      const response = await fetch(`/api/v1/admin/elections/${electionId}/candidates/${selectedCandidate.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${adminSession?.token}`,
+        },
+        body: JSON.stringify({
+          name: formName,
+          party: formType === 'Party' ? formParty : 'Independent',
+          candidate_type: formType,
+          symbol: formSymbol,
+          photo: formPhoto,
+          logo: formLogo,
+          description: formDescription,
+          information: formInformation,
+          status: formStatus,
+        }),
       });
-      await tx.wait();
+      if (!response.ok) throw new Error('Candidate update failed');
       setStatusMessage(`Candidate ${selectedCandidate.id} updated successfully.`);
       setShowEditModal(false);
       fetchElectionAndCandidates();
     } catch (err) {
-      setErrorMessage('Failed to edit candidate on blockchain.');
+      setErrorMessage('Failed to edit candidate.');
     } finally {
       setSubmitting(false);
     }
@@ -163,12 +229,15 @@ export const AdminCandidateManagement: React.FC = () => {
     if (!confirm) return;
 
     try {
-      const tx = await disableCandidate(candidateId);
-      await tx.wait();
+      const response = await fetch(`/api/v1/admin/elections/${electionId}/candidates/${candidateId}/disable`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${adminSession?.token}` },
+      });
+      if (!response.ok) throw new Error('Candidate disable failed');
       setStatusMessage('Candidate disabled successfully.');
       fetchElectionAndCandidates();
     } catch (err) {
-      alert('Failed to disable candidate on blockchain.');
+      alert('Failed to disable candidate.');
     }
   };
 
@@ -198,7 +267,7 @@ export const AdminCandidateManagement: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200 gap-4">
         <div>
           <div className="flex items-center space-x-2">
-            <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-mono text-xs font-bold">
+            <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-mono text-xs font-bold">
               Election: {electionId}
             </span>
             <span className={`px-2 py-0.5 rounded text-xs font-bold ${
@@ -217,7 +286,8 @@ export const AdminCandidateManagement: React.FC = () => {
 
         <button
           onClick={openAddModal}
-          className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center space-x-1.5 shadow-sm transition-colors self-start sm:self-auto"
+          type="button"
+          className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white text-xs font-bold flex items-center space-x-1.5 shadow-sm transition-colors self-start sm:self-auto"
         >
           <PlusCircle className="w-3.5 h-3.5" />
           <span>Add Candidate</span>
@@ -281,7 +351,10 @@ export const AdminCandidateManagement: React.FC = () => {
                     </div>
                   </td>
                   <td className="py-3 px-4 text-slate-700 font-medium">
-                    <div>{c.party}</div>
+                    <div className="flex items-center gap-2">
+                      {c.logo && <img src={c.logo} alt={`${c.party} logo`} className="h-7 w-7 rounded object-contain border border-slate-200" />}
+                      <span>{c.party}</span>
+                    </div>
                     <div className="text-[10px] text-slate-400">{c.candidateType}</div>
                   </td>
                   <td className="py-3 px-4 text-slate-600">
@@ -296,7 +369,7 @@ export const AdminCandidateManagement: React.FC = () => {
                   <td className="py-3 px-4 text-right space-x-1.5 whitespace-nowrap">
                     <button
                       onClick={() => openViewModal(c)}
-                      className="p-1.5 rounded-lg text-slate-600 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                      className="p-1.5 rounded-lg text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
                       title="View Details"
                     >
                       <Eye className="w-4 h-4" />
@@ -412,15 +485,29 @@ export const AdminCandidateManagement: React.FC = () => {
                 </div>
               </div>
 
-              <div>
-                <label className="block font-bold text-slate-700">Photo URL</label>
-                <input
-                  type="url"
-                  value={formPhoto}
-                  onChange={(e) => setFormPhoto(e.target.value)}
-                  placeholder="https://..."
-                  className="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-lg text-slate-900"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700">Candidate Photo *</label>
+                  <input
+                    type="file"
+                    required
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={(e) => e.target.files?.[0] && readImage(e.target.files[0], setFormPhoto)}
+                    className="mt-1 block w-full text-xs text-slate-600 file:mr-2 file:rounded-lg file:border-0 file:bg-emerald-100 file:px-3 file:py-2 file:font-semibold file:text-emerald-800"
+                  />
+                  {formPhoto && <img src={formPhoto} alt="Candidate preview" className="mt-2 h-16 w-16 rounded-lg object-cover border border-slate-200" />}
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700">Party / Candidate Logo *</label>
+                  <input
+                    type="file"
+                    required
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={(e) => e.target.files?.[0] && readImage(e.target.files[0], setFormLogo)}
+                    className="mt-1 block w-full text-xs text-slate-600 file:mr-2 file:rounded-lg file:border-0 file:bg-amber-100 file:px-3 file:py-2 file:font-semibold file:text-amber-800"
+                  />
+                  {formLogo && <img src={formLogo} alt="Logo preview" className="mt-2 h-16 w-16 rounded-lg object-contain border border-slate-200 bg-white" />}
+                </div>
               </div>
 
               <div>
@@ -456,7 +543,7 @@ export const AdminCandidateManagement: React.FC = () => {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold"
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold"
                 >
                   {submitting ? 'Validating...' : 'Save Candidate'}
                 </button>
@@ -529,6 +616,27 @@ export const AdminCandidateManagement: React.FC = () => {
                 </select>
               </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700">Candidate Photo</label>
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={(e) => e.target.files?.[0] && readImage(e.target.files[0], setFormPhoto)}
+                    className="mt-1 block w-full text-xs text-slate-600 file:mr-2 file:rounded-lg file:border-0 file:bg-emerald-100 file:px-3 file:py-2 file:font-semibold file:text-emerald-800"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700">Party / Candidate Logo</label>
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={(e) => e.target.files?.[0] && readImage(e.target.files[0], setFormLogo)}
+                    className="mt-1 block w-full text-xs text-slate-600 file:mr-2 file:rounded-lg file:border-0 file:bg-amber-100 file:px-3 file:py-2 file:font-semibold file:text-amber-800"
+                  />
+                </div>
+              </div>
+
               <div>
                 <label className="block font-bold text-slate-700">Description</label>
                 <input
@@ -560,7 +668,7 @@ export const AdminCandidateManagement: React.FC = () => {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold"
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold"
                 >
                   {submitting ? 'Saving...' : 'Update Details'}
                 </button>
@@ -575,7 +683,7 @@ export const AdminCandidateManagement: React.FC = () => {
         <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <span className="font-mono text-xs font-bold text-blue-700">{selectedCandidate.id}</span>
+              <span className="font-mono text-xs font-bold text-emerald-700">{selectedCandidate.id}</span>
               <button onClick={() => setShowViewModal(false)} className="text-slate-400 hover:text-slate-600">
                 <X className="w-5 h-5" />
               </button>
@@ -595,7 +703,7 @@ export const AdminCandidateManagement: React.FC = () => {
               )}
               <div>
                 <h3 className="text-base font-bold text-slate-900">{selectedCandidate.name}</h3>
-                <p className="text-xs font-semibold text-blue-700">{selectedCandidate.party}</p>
+                <p className="text-xs font-semibold text-emerald-700">{selectedCandidate.party}</p>
                 <p className="text-[11px] text-slate-500">Symbol: {selectedCandidate.symbol}</p>
               </div>
             </div>

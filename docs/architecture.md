@@ -6,10 +6,10 @@ The **National Privacy-Preserving E-Voting Architecture** is an enterprise-grade
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
-│                             IDENTITY DOMAIN (ECI / UIDAI)                      │
+│                         IDENTITY DOMAIN (ECI / SMS OTP)                       │
 │                                                                                 │
-│   Voter EPIC Entry  ──►  Electoral Roll Check  ──►  Aadhaar Consent & OTP      │
-│   (ABC1234567)           (Constituency Valid)      (UIDAI AUA/ASA Gateway)      │
+│   Voter EPIC Entry  ──►  Electoral Roll Check  ──►  Mobile SMS OTP             │
+│   (ABC1234567)           (Constituency Valid)      (Twilio / Fast2SMS)          │
 │                                                                                 │
 │                                      │ Verified                                 │
 │                                      ▼                                          │
@@ -52,7 +52,7 @@ The **National Privacy-Preserving E-Voting Architecture** is an enterprise-grade
 ## 2. Core Architectural Pillars
 
 ### 1. Identity vs. Ballot Domain Segregation
-- The identity domain contains Voter ID (EPIC), UIDAI authentication references, and constituency eligibility.
+- The identity domain contains Voter ID (EPIC), SMS verification state, and constituency eligibility.
 - When verified, the identity domain issues an **anonymous, cryptographically random single-use token**.
 - The server stores only the token's SHA-256 hash.
 - The ballot domain accepts only the token hash, a candidate ID, and a client-side blinding nonce.

@@ -25,6 +25,7 @@ export interface Candidate {
   constituency: string;
   symbol: string;
   photo?: string;
+  logo?: string;
   description: string;
   information: string;
   status: CandidateStatus;
@@ -111,31 +112,6 @@ export interface ElectoralRollRecord {
   eligibilityStatus: 'ELIGIBLE' | 'INELIGIBLE_ALREADY_VOTED' | 'INELIGIBLE_NOT_REGISTERED' | 'CONSTITUENCY_MISMATCH';
 }
 
-export interface UIDAIConfigState {
-  environment: 'unconfigured' | 'sandbox' | 'production';
-  enabled: boolean;
-  authUrlConfigured: boolean;
-  otpUrlConfigured: boolean;
-  certificatesLoaded: boolean;
-  statusMessage: string;
-}
-
-export interface UIDAIOTPResponse {
-  transaction_id?: string;
-  status: 'OTP_REQUESTED' | 'UNCONFIGURED' | 'FAILED';
-  message: string;
-  error_code?: string;
-}
-
-export interface UIDAIAuthResponse {
-  status: 'AUTHENTICATED' | 'AUTHENTICATION_FAILED' | 'UNCONFIGURED';
-  transaction_id?: string;
-  authentication_reference?: string;
-  authenticated_at?: string;
-  reason_code?: string;
-  message: string;
-}
-
 export interface AuditCheckItem {
   id: string;
   name: string;
@@ -201,7 +177,7 @@ export interface SystemHealthState {
   redis: 'HEALTHY' | 'DEGRADED' | 'NOT CONFIGURED' | 'UNAVAILABLE';
   backend: 'HEALTHY' | 'DEGRADED' | 'NOT CONFIGURED' | 'UNAVAILABLE';
   blockchain: 'HEALTHY' | 'DEGRADED' | 'NOT CONFIGURED' | 'UNAVAILABLE';
-  uidai: 'HEALTHY' | 'DEGRADED' | 'NOT CONFIGURED' | 'UNAVAILABLE';
+  smsGateway?: 'HEALTHY' | 'DEGRADED' | 'NOT CONFIGURED' | 'UNAVAILABLE';
   electoralRoll: 'HEALTHY' | 'DEGRADED' | 'NOT CONFIGURED' | 'UNAVAILABLE';
 }
 
@@ -233,9 +209,44 @@ export interface AdminProfile {
 
 export interface VoterProfile {
   voterId: string; // EPIC
-  authenticatedAadhaarRef?: string;
   constituency: string;
   state: string;
   hasVoted: boolean;
   issuedTokenHash?: string;
+  name?: string;
+  age?: number;
+  address?: string;
+  photo?: string;
+  maskedAadhaar?: string;
+}
+
+export interface VoteHistoryItem {
+  voteNumber: number;
+  electionId: string;
+  electionTitle: string;
+  constituency: string;
+  status: 'RECORDED' | 'NOT_YET_VOTED';
+  blockchainStatus: 'CONFIRMED' | 'PENDING' | 'REJECTED';
+  transactionReference: string;
+  blockIndex: number;
+  blockHash: string;
+  nonce?: string;
+  timestamp: string;
+}
+
+export interface AdminVoteRecord {
+  blockIndex: number;
+  blockHash: string;
+  previousHash: string;
+  timestamp: string;
+  channelId: string;
+  merkleRoot: string;
+  validatorSignature: string;
+  transactionReference: string;
+  electionId: string;
+  ballotCommitment: string;
+  credentialHash: string;
+  candidateId: string;
+  status: string;
+  blockchainStatus: string;
 }

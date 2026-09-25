@@ -1,0 +1,6 @@
+.exit
+const [sender] = await ethers.getSigners()
+const { ethers } = require("hardhat")
+await ethers.provider.getBalance(sender.address)
+const [sender] = await ethers.getSigners()
+npx hardhat console --network localhost

@@ -7,7 +7,7 @@
 - **SYSTEM_ADMIN**: Infrastructure observability; prohibited from querying ballot content or modifying voter data.
 
 ## 2. Brute-Force & Denial-of-Service Mitigations
-- **Aadhaar OTP Lockout**: Maximum 3 verification attempts permitted per transaction before automated locking.
+- **SMS OTP Lockout**: Maximum 3 verification attempts permitted per transaction before automated locking.
 - **IP Rate-Limiting**: Sliding window rate limits (300 requests/minute per client IP) implemented at the API Gateway.
 - **Stateless Node.js Architecture**: Horizontal scalability behind Nginx reverse proxies with request buffering.
 

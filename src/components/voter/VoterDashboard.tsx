@@ -67,7 +67,8 @@ export const VoterDashboard: React.FC = () => {
                 {voterSession?.fullNameMasked}
               </h1>
               <p className="text-xs text-slate-500">
-                Constituency: <strong>{voterSession?.constituency}</strong> • {voterSession?.state}
+                {/* ✅ BUG FIX: Translate 'Constituency:' label */}
+                {isTamil ? 'தொகுதி:' : 'Constituency:'} <strong>{voterSession?.constituency}</strong> • {voterSession?.state}
               </p>
             </div>
           </div>
@@ -77,8 +78,8 @@ export const VoterDashboard: React.FC = () => {
               {isTamil ? 'வாக்குப்பதிவு நிலை' : 'Suffrage Status'}
             </span>
             {hasVoted ? (
-              <span className="inline-flex items-center space-x-1 px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-bold border border-blue-300">
-                <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />
+              <span className="inline-flex items-center space-x-1 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-300">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                 <span>{isTamil ? 'வாக்கு பதிவு செய்யப்பட்டது' : 'VOTE RECORDED'}</span>
               </span>
             ) : (
@@ -101,7 +102,7 @@ export const VoterDashboard: React.FC = () => {
           </div>
 
           <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-            <span className="text-slate-500">{isTamil ? 'ஆதார் அங்கீகாரம்' : 'UIDAI Authentication'}</span>
+            <span className="text-slate-500">{isTamil ? 'மொபைல் OTP அங்கீகாரம்' : 'Mobile SMS OTP Authentication'}</span>
             <div className="font-bold text-slate-900 flex items-center space-x-1 mt-0.5">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
               <span>{isTamil ? 'OTP உறுதி செய்யப்பட்டது' : 'OTP Confirmed'}</span>
@@ -112,7 +113,10 @@ export const VoterDashboard: React.FC = () => {
             <span className="text-slate-500">{isTamil ? 'வாக்கு டோக்கன்' : 'Anonymous Credential'}</span>
             <div className="font-bold text-slate-900 flex items-center space-x-1 mt-0.5">
               <Lock className="w-3.5 h-3.5 text-purple-600" />
-              <span>{hasVoted ? 'CONSUMED (USED)' : 'ACTIVE (SINGLE-USE)'}</span>
+              <span>{hasVoted
+                ? (isTamil ? 'பயன்படுத்தப்பட்டது' : 'CONSUMED (USED)')
+                : (isTamil ? 'செயலில் உள்ளது (ஒரே முறை)' : 'ACTIVE (SINGLE-USE)')
+              }</span>
             </div>
           </div>
         </div>
@@ -151,10 +155,11 @@ export const VoterDashboard: React.FC = () => {
 
                   <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 pt-1">
                     <div>
-                      <strong>Constituency:</strong> {elec.constituency}
+                      {/* ✅ BUG FIX: Translate election card labels */}
+                      <strong>{isTamil ? 'தொகுதி:' : 'Constituency:'}</strong> {elec.constituency}
                     </div>
                     <div>
-                      <strong>Voting Window:</strong> {new Date(elec.startTime).toLocaleDateString()} — {new Date(elec.endTime).toLocaleDateString()}
+                      <strong>{isTamil ? 'வாக்குப்பதிவு நேரம்:' : 'Voting Window:'}</strong> {new Date(elec.startTime).toLocaleDateString()} — {new Date(elec.endTime).toLocaleDateString()}
                     </div>
                   </div>
                 </div>
@@ -167,7 +172,7 @@ export const VoterDashboard: React.FC = () => {
                       </span>
                       <Link
                         to="/voter/status"
-                        className="text-[11px] text-blue-600 hover:underline mt-1 block"
+                        className="text-[11px] text-emerald-600 hover:underline mt-1 block"
                       >
                         {isTamil ? 'ரசீதை பார்க்க' : 'View Cryptographic Receipt →'}
                       </Link>

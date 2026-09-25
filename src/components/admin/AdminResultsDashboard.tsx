@@ -82,7 +82,7 @@ export const AdminResultsDashboard: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200 gap-4">
         <div>
           <div className="flex items-center space-x-2">
-            <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-mono text-xs font-bold">
+            <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-mono text-xs font-bold">
               Election: {electionId}
             </span>
             <span className={`px-2 py-0.5 rounded text-xs font-bold ${
@@ -141,7 +141,7 @@ export const AdminResultsDashboard: React.FC = () => {
 
         <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm">
           <span className="text-slate-500 font-medium">Valid Ballots Counted</span>
-          <div className="text-xl font-extrabold text-blue-600 mt-1">
+          <div className="text-xl font-extrabold text-emerald-600 mt-1">
             {results?.totalVotesCast?.toLocaleString() || 0}
           </div>
         </div>
@@ -170,7 +170,7 @@ export const AdminResultsDashboard: React.FC = () => {
       {/* Candidate Results Breakdown */}
       <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
         <h2 className="text-sm font-bold text-slate-900 flex items-center space-x-2">
-          <BarChart3 className="w-4 h-4 text-blue-600" />
+          <BarChart3 className="w-4 h-4 text-emerald-600" />
           <span>Candidate Vote Totals</span>
         </h2>
 
@@ -184,14 +184,14 @@ export const AdminResultsDashboard: React.FC = () => {
                 </div>
                 <div className="text-right">
                   <span className="font-bold text-slate-900 text-sm">{cand.voteCount} votes</span>
-                  <span className="text-blue-600 font-bold ml-2">({cand.percentage}%)</span>
+                  <span className="text-emerald-600 font-bold ml-2">({cand.percentage}%)</span>
                 </div>
               </div>
 
               {/* Progress bar */}
               <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
                 <div
-                  className="bg-blue-600 h-2.5 rounded-full transition-all duration-500"
+                  className="bg-emerald-600 h-2.5 rounded-full transition-all duration-500"
                   style={{ width: `${Math.max(Number(cand.percentage), 2)}%` }}
                 />
               </div>
@@ -208,7 +208,7 @@ export const AdminResultsDashboard: React.FC = () => {
             <span>Blockchain Ledger Integrity</span>
           </h3>
           <p className="text-slate-500 text-[11px]">
-            Every block verified against its predecessor hash on the Hyperledger Fabric channel.
+            Every block verified against its predecessor hash and anchored to the Solidity EVM smart contract.
           </p>
           <div className="p-3 bg-slate-50 rounded-xl space-y-1 font-mono text-[11px] text-slate-700">
             <div>Blocks Verified: {results?.blockchainVerification?.totalBlocks || 0}</div>
