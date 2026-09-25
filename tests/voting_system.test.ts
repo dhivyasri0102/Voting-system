@@ -2,10 +2,10 @@
  * Automated Test Suite for National E-Voting Architecture
  * 
  * Verifies:
- * 1. Electoral Roll verification & UNCONFIGURED default handling
- * 2. UIDAI format validation & UNCONFIGURED status without invented credentials
- * 3. Secure automatic generation of JWT_SECRET and ADMIN_MFA_SECRET
- * 4. Hyperledger Fabric local development network auto-configuration & CA certificates
+ * 1. Secure automatic generation of JWT_SECRET and ADMIN_MFA_SECRET
+ * 2. Hyperledger Fabric local development network auto-configuration & CA certificates
+ * 3. Electoral Roll verification & UNCONFIGURED default handling
+ * 4. Free-Tier SMS Service & Dynamic Voter Registration (Zero Mock Data)
  * 5. Anonymous credential issuance & cryptographic air-gap
  * 6. Permissioned blockchain block recording & Merkle root calculations
  * 7. Atomic concurrency protection (Duplicate vote rejection)
@@ -15,8 +15,8 @@
  */
 
 import { ElectoralRollService } from '../src/backend/integrations/electoralRoll/ElectoralRollService.js';
-import { UIDAIConfiguration } from '../src/backend/integrations/uidai/UIDAIConfiguration.js';
-import { UIDAIOTPService } from '../src/backend/integrations/uidai/UIDAIAuthenticationService.js';
+import { VoterVerificationService } from '../src/backend/services/VoterVerificationService.js';
+import { SmsService } from '../src/backend/services/SmsService.js';
 import { AnonymousCredentialService } from '../src/backend/services/AnonymousCredentialService.js';
 import { BallotService } from '../src/backend/services/BallotService.js';
 import { BlockchainLedgerService } from '../src/backend/services/BlockchainLedgerService.js';
@@ -69,31 +69,44 @@ async function runTests() {
   const invalidLookup = await ElectoralRollService.verifyVoterId(invalidEpic);
   assert(invalidLookup.status === 'NOT_FOUND', 'Malformed EPIC rejected regardless of endpoint');
 
-  // 4. UIDAI Verification & Real-World Non-Invented Rules
-  console.log('\n--- TEST GROUP 4: UIDAI INTEGRATION & STRICT COMPLIANCE ---');
-  const uidaiConfig = UIDAIConfiguration.getInstance();
-  assert(uidaiConfig.isConfigured() === false, 'UIDAI defaults to UNCONFIGURED when credentials are unavailable');
-
-  // Attempt without consent
-  const noConsentRes = await UIDAIOTPService.requestOTP({
-    aadhaarNumber: '234567890124',
-    userConsent: false,
+  // 4. SMS Gateway & Dynamic Voter Registration Test (Zero Mock Data)
+  console.log('\n--- TEST GROUP 4: FREE-TIER SMS SERVICE & DYNAMIC VOTER REGISTRATION ---');
+  
+  // Register dynamic voter
+  const testVoterId = 'TNL' + Math.floor(1000000 + Math.random() * 9000000);
+  const regResult = VoterVerificationService.registerVoter({
+    voterId: testVoterId,
+    fullName: 'Ramanathan Meenakshi',
+    mobileNumber: '9840123456',
+    constituency: 'Central Chennai (Constituency No. 04)',
+    state: 'Tamil Nadu',
+    status: 'ACTIVE',
+    registeredAt: new Date().toISOString(),
   });
-  assert(noConsentRes.status === 'CONSENT_REQUIRED', 'Aadhaar request without consent is rejected');
+  assert(regResult.success === true, 'Dynamic voter registration succeeded');
 
-  // Attempt with invalid format
-  const badAadhaarRes = await UIDAIOTPService.requestOTP({
-    aadhaarNumber: '12345',
-    userConsent: true,
-  });
-  assert(badAadhaarRes.status === 'INVALID_FORMAT', 'Malformed Aadhaar number rejected');
+  // Verify voter lookup
+  const verifyResult = VoterVerificationService.verifyVoterId(testVoterId);
+  assert(verifyResult.verified === true, 'Registered voter successfully verified in database');
+  assert(Boolean(verifyResult.mobile_masked), 'Mobile number is masked for privacy');
 
-  // Attempt with unconfigured gateway
-  const unconfiguredUidaiRes = await UIDAIOTPService.requestOTP({
-    aadhaarNumber: '234567890124',
-    userConsent: true,
-  });
-  assert(unconfiguredUidaiRes.status === 'UNCONFIGURED', 'UIDAI returns UNCONFIGURED without inventing credentials');
+  // Request SMS OTP
+  const otpStart = await VoterVerificationService.startOtp(testVoterId);
+  assert(otpStart.success === true, 'SMS OTP successfully dispatched');
+  assert(Boolean(otpStart.verification_id), 'Session verification ID generated');
+  assert(Boolean(otpStart.debug_otp), 'Secure 6-digit OTP generated in dev mode');
+
+  // Verify wrong OTP fails
+  const badOtpVerify = VoterVerificationService.verifyOtp(otpStart.verification_id!, '000000');
+  assert(badOtpVerify.verified === false, 'Incorrect OTP rejected with attempts decremented');
+
+  // Verify correct OTP succeeds
+  const correctOtpVerify = VoterVerificationService.verifyOtp(otpStart.verification_id!, otpStart.debug_otp!);
+  assert(correctOtpVerify.verified === true, 'Correct OTP verified successfully');
+
+  // Test direct SMS service
+  const directSms = await SmsService.sendOtp('9840123456', '654321', 'Ramanathan');
+  assert(directSms.success === true, 'SmsService successfully handles OTP delivery');
 
   // 5. Anonymous Credential Issuance
   console.log('\n--- TEST GROUP 5: ANONYMOUS CREDENTIAL CRYPTOGRAPHIC ENGINE ---');

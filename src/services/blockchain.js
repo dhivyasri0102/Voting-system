@@ -7,7 +7,10 @@ const ABI = [
   "function candidateCount() view returns (uint256)",
   "function getAllCandidates() view returns (tuple(uint256 id,string name,string party,string symbol,string description,uint256 voteCount,bool exists)[])",
   "function getCandidate(uint256) view returns (uint256 id,string name,string party,string symbol,string description,uint256 voteCount,bool exists)",
-  "function owner() view returns (address)"
+  "function owner() view returns (address)",
+  // ✅ BUG FIX: castVote was missing from ABI — the Voting.sol contract exposes vote(uint256 candidateId)
+  "function vote(uint256 candidateId)",
+  "event Voted(address indexed voter, uint256 indexed candidateId)",
 ];
 
 // Hardhat Local
@@ -171,6 +174,32 @@ export const addCandidate = async (candidate) => {
 
 // Candidate management helpers
 // Voting.sol contract stores active candidate records. Status changes are also tracked via backend election registry.
+// Cast a vote on-chain (calls the Voting.sol vote(uint256) function)
+// NOTE: This records the vote on the EVM chain via MetaMask.
+// The backend REST API (/api/v1/voting/ballots/cast) handles the
+// Hyperledger Fabric permissioned ledger write independently.
+export const castVote = async (candidateId) => {
+  if (!candidateId && candidateId !== 0) {
+    throw new Error("candidateId is required to cast a vote on-chain.");
+  }
+
+  const contract = await getContract();
+
+  // Sends the transaction via MetaMask — returns TransactionResponse
+  const tx = await contract.vote(Number(candidateId));
+
+  // Wait for 1 confirmation
+  const receipt = await tx.wait(1);
+
+  return {
+    transactionHash: receipt.hash,
+    blockNumber: receipt.blockNumber,
+    gasUsed: receipt.gasUsed?.toString(),
+  };
+};
+
+// Temporary functions
+// Your current Voting.sol does not contain editCandidate or disableCandidate.
 
 export const editCandidate = async (candidateId, updates) => {
   console.log("Candidate update logged:", candidateId, updates);

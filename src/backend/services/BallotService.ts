@@ -4,7 +4,7 @@
  * Strict Architectural Rule:
  * NEVER store:
  * - Voter ID + Candidate
- * - Aadhaar + Vote
+ * - EPIC identity + Vote
  * - Name + Candidate
  * 
  * Identity Domain and Ballot Domain are physically and logically segregated.
@@ -17,7 +17,7 @@ import { ElectionLifecycleService } from './ElectionLifecycleService.js';
 import { SecurityMonitoringService } from './SecurityMonitoringService.js';
 
 // ISOLATED BALLOT DOMAIN: Keyed by ballotCommitment ONLY
-// Contains ZERO identity attributes (No Voter ID, No Aadhaar, No Name, No IP)
+// Contains ZERO identity attributes (No Voter ID, No Name, No IP)
 interface StoredBallotItem {
   ballotCommitment: string;
   candidateId: string;

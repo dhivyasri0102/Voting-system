@@ -4,7 +4,6 @@
 **Under no condition does the system persist or link identity data to candidate selection.**
 
 ### Prohibited Associations
-- `Aadhaar Number` ──X── `Candidate ID`
 - `Voter ID / EPIC` ──X── `Candidate ID`
 - `Voter Name` ──X── `Candidate ID`
 - `IP Address` ──X── `Candidate ID`
@@ -12,7 +11,7 @@
 ## 2. Cryptographic Air-Gap Protocol
 
 ```
-Resident (Voter ID + Aadhaar OTP)
+Resident (Voter ID + Mobile SMS OTP)
               │
               ▼
     [Identity Gateway]

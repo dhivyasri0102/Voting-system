@@ -6,15 +6,14 @@
  * - The identity domain issues the token.
  * - The voting domain consumes only the token hash.
  * - Enforces atomic single-use concurrency protection to prevent double-spending or replay attacks.
+ * - Backed by persistent DataStoreService.
  */
 
 import crypto from 'crypto';
 import { VotingCredential, CredentialStatus } from '../../types/index.js';
+import { DataStoreService } from './DataStoreService.js';
 
 export class AnonymousCredentialService {
-  // Keyed by credentialHash
-  private static credentials = new Map<string, VotingCredential>();
-
   // Mutex locks for atomic operations per credentialHash
   private static locks = new Set<string>();
 
@@ -48,7 +47,7 @@ export class AnonymousCredentialService {
       expiresAt: expiresAt.toISOString(),
     };
 
-    this.credentials.set(credentialHash, credentialRecord);
+    DataStoreService.saveCredential(credentialRecord);
 
     return {
       rawCredential,
@@ -69,6 +68,7 @@ export class AnonymousCredentialService {
     console.log(`[AnonymousCredentialService] Validating credential prefix [${hashPrefix}] for election [${electionId}]`);
 
     const cred = this.credentials.get(credentialHash);
+    const cred = DataStoreService.getCredential(credentialHash);
 
     if (!cred) {
       console.warn(`[AnonymousCredentialService] Hash [${hashPrefix}] not found in credential registry. Registered total: ${this.credentials.size}`);
@@ -89,6 +89,7 @@ export class AnonymousCredentialService {
 
     if (new Date() > new Date(cred.expiresAt)) {
       cred.status = 'EXPIRED';
+      DataStoreService.saveCredential(cred);
       return { isValid: false, reason: 'Voting credential has expired.' };
     }
 
@@ -101,10 +102,7 @@ export class AnonymousCredentialService {
 
   /**
    * ATOMIC ONE-VOTE ENFORCEMENT
-   * 
-   * Atomically transitions a credential from ISSUED -> USED.
-   * If two requests attempt to consume the same credential simultaneously,
-   * the lock prevents race conditions and only the first request succeeds.
+   * Transitions credential status from ISSUED to USED atomically with mutex protection.
    */
   public static async consumeCredentialAtomically(
     credentialHash: string,
@@ -115,7 +113,7 @@ export class AnonymousCredentialService {
     if (this.locks.has(credentialHash)) {
       return {
         success: false,
-        reason: 'Concurrent vote submission detected for this credential. Second attempt rejected.',
+        reason: 'Concurrent vote submission detected for this credential. Request blocked.',
       };
     }
 
@@ -124,57 +122,51 @@ export class AnonymousCredentialService {
     try {
       const validation = this.validateCredentialHash(credentialHash, electionId);
       if (!validation.isValid || !validation.credential) {
-        return { success: false, reason: validation.reason || 'Credential validation failed.' };
+        return { success: false, reason: validation.reason };
       }
 
       const cred = validation.credential;
-
-      // Atomic state transition
       cred.status = 'USED';
       cred.usedAt = new Date().toISOString();
       cred.transactionReference = transactionReference;
 
-      this.credentials.set(credentialHash, cred);
+      DataStoreService.saveCredential(cred);
 
       return { success: true };
     } finally {
-      // Release lock
       this.locks.delete(credentialHash);
     }
   }
 
-  public static getCredentialsSummary(electionId?: string): {
-    totalIssued: number;
-    totalUsed: number;
-    totalExpired: number;
-    totalRevoked: number;
-  } {
-    let totalIssued = 0;
-    let totalUsed = 0;
-    let totalExpired = 0;
-    let totalRevoked = 0;
-
-    for (const cred of this.credentials.values()) {
-      if (electionId && cred.electionId !== electionId) continue;
-      if (cred.status === 'ISSUED') totalIssued++;
-      if (cred.status === 'USED') totalUsed++;
-      if (cred.status === 'EXPIRED') totalExpired++;
-      if (cred.status === 'REVOKED') totalRevoked++;
-    }
-
-    return { totalIssued: totalIssued + totalUsed, totalUsed, totalExpired, totalRevoked };
-  }
-
-  public static getAllRecords(): VotingCredential[] {
-    return Array.from(this.credentials.values());
+  public static getCredentialStatus(credentialHash: string): CredentialStatus | 'UNKNOWN' {
+    const cred = DataStoreService.getCredential(credentialHash);
+    return cred ? cred.status : 'UNKNOWN';
   }
 
   public static getAllCredentials(): VotingCredential[] {
-    return Array.from(this.credentials.values());
+    return DataStoreService.getAllCredentials();
   }
 
-  public static reset(): void {
-    this.credentials.clear();
-    this.locks.clear();
+  public static getCredentialsSummary(electionId: string): {
+    totalIssued: number;
+    totalUsed: number;
+    totalRevoked: number;
+    totalExpired: number;
+  } {
+    const creds = DataStoreService.getAllCredentials().filter((c) => c.electionId === electionId);
+    return {
+      totalIssued: creds.length,
+      totalUsed: creds.filter((c) => c.status === 'USED').length,
+      totalRevoked: creds.filter((c) => c.status === 'REVOKED').length,
+      totalExpired: creds.filter((c) => c.status === 'EXPIRED').length,
+    };
+  }
+
+  public static revokeCredential(credentialHash: string): boolean {
+    const cred = DataStoreService.getCredential(credentialHash);
+    if (!cred) return false;
+    cred.status = 'REVOKED';
+    DataStoreService.saveCredential(cred);
+    return true;
   }
 }

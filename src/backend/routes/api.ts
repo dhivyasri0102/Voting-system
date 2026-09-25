@@ -23,6 +23,7 @@ import { SecurityMonitoringService } from '../services/SecurityMonitoringService
 import { AuthService } from '../services/AuthService.js';
 import { UIDAIConfiguration } from '../integrations/uidai/UIDAIConfiguration.js';
 import { UidaiGatewayService } from '../services/UidaiGatewayService.js';
+import { DataStoreService } from '../services/DataStoreService.js';
 
 const router = Router();
 
@@ -342,10 +343,17 @@ router.post('/admin/elections/:id/candidates', requireAdminAuth, (req: Request, 
     constituency,
     symbol,
     photo,
+    logo,
     description,
     information,
     status,
   } = req.body;
+
+  for (const [field, value] of [['photo', photo], ['logo', logo]] as const) {
+    if (value && (typeof value !== 'string' || !/^data:image\/(png|jpeg|jpg|webp);base64,[A-Za-z0-9+/=]+$/.test(value) || value.length > 3_000_000)) {
+      return res.status(400).json({ success: false, message: `${field} must be a valid PNG, JPEG, or WebP image under 2 MB.` });
+    }
+  }
 
   const result = ElectionLifecycleService.addCandidate(
     req.params.id,
@@ -357,6 +365,7 @@ router.post('/admin/elections/:id/candidates', requireAdminAuth, (req: Request, 
       constituency: constituency || '',
       symbol,
       photo,
+      logo,
       description: description || '',
       information: information || '',
       status: status || 'ACTIVE',
@@ -383,10 +392,17 @@ router.put('/admin/elections/:id/candidates/:candidateId', requireAdminAuth, (re
     candidate_type,
     symbol,
     photo,
+    logo,
     description,
     information,
     status,
   } = req.body;
+
+  for (const [field, value] of [['photo', photo], ['logo', logo]] as const) {
+    if (value && (typeof value !== 'string' || !/^data:image\/(png|jpeg|jpg|webp);base64,[A-Za-z0-9+/=]+$/.test(value) || value.length > 3_000_000)) {
+      return res.status(400).json({ success: false, message: `${field} must be a valid PNG, JPEG, or WebP image under 2 MB.` });
+    }
+  }
 
   const result = ElectionLifecycleService.updateCandidate(
     req.params.id,
@@ -397,6 +413,7 @@ router.put('/admin/elections/:id/candidates/:candidateId', requireAdminAuth, (re
       candidateType: candidate_type,
       symbol,
       photo,
+      logo,
       description,
       information,
       status,
@@ -573,11 +590,11 @@ router.post(['/verification/voter-id', '/verification/voter-id/'], (req: Request
 /**
  * POST /api/v1/verification/otp/start/
  * POST /api/v1/verification/otp/start
- * Step 2: Generates a secure 6-digit OTP and logs it to the developer console.
+ * Step 2: Generates a secure 6-digit OTP and dispatches it via SmsService.
  */
-router.post(['/verification/otp/start', '/verification/otp/start/'], (req: Request, res: Response) => {
-  const { voter_id } = req.body;
-  const result = VoterVerificationService.startOtp(voter_id);
+router.post(['/verification/otp/start', '/verification/otp/start/'], async (req: Request, res: Response) => {
+  const { voter_id, mobile_number } = req.body;
+  const result = await VoterVerificationService.startOtp(voter_id, mobile_number);
 
   if (!result.success) {
     const statusCode = result.cooldown_seconds ? 429 : 400;
@@ -780,6 +797,7 @@ router.post('/voting/ballots/cast', async (req: Request, res: Response) => {
     SecurityMonitoringService.incrementMetric('votesSubmittedTotal');
 
     return res.status(200).json({
+      success: true,
       status: 'CONFIRMED',
       success: true,
       transaction_reference: result.transactionReference,
@@ -801,6 +819,7 @@ router.post('/voting/ballots/cast', async (req: Request, res: Response) => {
     });
   } catch (err: any) {
     return res.status(500).json({
+      success: false,
       status: 'LEDGER_ERROR',
       success: false,
       message: 'Failed to record vote on permissioned blockchain ledger.',
@@ -828,7 +847,37 @@ router.get('/elections/:id/candidates', (req: Request, res: Response) => {
 });
 
 // ==========================================
-// 10. BLOCKCHAIN, AUDIT & HEALTH
+// 10. ADMIN VOTER REGISTRATION (NO MOCK DATA)
+// ==========================================
+
+router.post('/admin/voters/register', requireAdminAuth, (req: Request, res: Response) => {
+  const { voter_id, full_name, mobile_number, constituency, state } = req.body;
+  if (!voter_id || !full_name || !mobile_number || !constituency) {
+    return res.status(400).json({
+      success: false,
+      message: 'Missing required voter fields: voter_id, full_name, mobile_number, constituency.',
+    });
+  }
+
+  const result = VoterVerificationService.registerVoter({
+    voterId: voter_id,
+    fullName: full_name,
+    mobileNumber: mobile_number,
+    constituency,
+    state: state || 'Tamil Nadu',
+    status: 'ACTIVE',
+    registeredAt: new Date().toISOString(),
+  });
+
+  return res.status(result.success ? 201 : 400).json(result);
+});
+
+router.get('/admin/voters', requireAdminAuth, (req: Request, res: Response) => {
+  res.json(DataStoreService.getAllVoters());
+});
+
+// ==========================================
+// 11. BLOCKCHAIN, AUDIT & HEALTH
 // ==========================================
 
 router.get('/blockchain/blocks', (req: Request, res: Response) => {
@@ -985,6 +1034,109 @@ router.get('/admin/votes', (req: Request, res: Response) => {
       status: tx.status || 'COMMITTED',
       blockchainStatus: 'CONFIRMED',
     };
+// 12. MOBILE OTP ALIAS ENDPOINTS (Free-Tier SMS)
+// ==========================================
+
+/**
+ * POST /api/v1/verification/send-otp
+ * Mobile number OTP dispatch (alias for /verification/otp/start)
+ * Supports Twilio free-tier and Fast2SMS free-tier
+ */
+router.post('/verification/send-otp', async (req: Request, res: Response) => {
+  const { phone, voter_id } = req.body;
+
+  if (!phone || !voter_id) {
+    return res.status(400).json({
+      success: false,
+      message: 'Mobile number and voter ID are required.',
+    });
+  }
+
+  const cleanPhone = phone.replace(/\D/g, '');
+  if (!/^[6-9]\d{9}$/.test(cleanPhone)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid Indian mobile number. Must be 10 digits starting with 6-9.',
+    });
+  }
+
+  try {
+    const result = await VoterVerificationService.startOtp(voter_id, cleanPhone);
+    if (!result.success) {
+      return res.status(result.cooldown_seconds ? 429 : 400).json(result);
+    }
+    return res.status(200).json({
+      ...result,
+      transactionId: result.verification_id || ('TXN-' + Date.now()),
+    });
+  } catch {
+    return res.status(503).json({
+      success: false,
+      message: 'OTP service is temporarily unavailable. Please try again later.',
+    });
+  }
+});
+
+/**
+ * POST /api/v1/verification/verify-otp
+ * Mobile OTP verification (alias for /verification/otp/verify)
+ * Returns anonymous voting credential on success
+ */
+router.post('/verification/verify-otp', (req: Request, res: Response) => {
+  const { transaction_id, otp, voter_id } = req.body;
+
+  if (!transaction_id || !otp) {
+    return res.status(400).json({
+      success: false,
+      message: 'Transaction ID and OTP are required.',
+    });
+  }
+
+  if (!/^\d{6}$/.test(otp)) {
+    return res.status(400).json({
+      success: false,
+      message: 'OTP must be exactly 6 digits.',
+    });
+  }
+
+  const result = VoterVerificationService.verifyOtp(transaction_id, otp);
+  if (!result.verified) {
+    return res.status(result.blocked ? 429 : 400).json({
+      ...result,
+      success: false,
+    });
+  }
+
+  const credResult = VoterVerificationService.issueCredential({
+    voterId: result.voter_id || voter_id,
+  });
+  if (!credResult.authorized) {
+    return res.status(409).json({ success: false, message: credResult.message });
+  }
+
+  return res.status(200).json({
+    success: true,
+    verified: true,
+    authReference: 'AUTH-' + Date.now(),
+    credential: { raw: credResult.raw_credential, hash: credResult.credential_hash },
+    message: 'OTP verified. Anonymous voting credential issued.',
+  });
+});
+
+/**
+ * GET /api/v1/voting/status
+ * Quick voter status check by voter_id query param
+ */
+router.get('/voting/status', (req: Request, res: Response) => {
+  const voterId = req.query.voter_id as string;
+  if (!voterId) {
+    return res.status(400).json({ message: 'voter_id query parameter required' });
+  }
+  const hasVoted = ElectoralRollService.hasVoted(voterId);
+  return res.json({
+    voter_id: voterId.toUpperCase(),
+    has_voted: hasVoted,
+    status: hasVoted ? 'VOTE_RECORDED' : 'NOT_YET_VOTED',
   });
 
   res.json({

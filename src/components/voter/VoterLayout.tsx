@@ -23,10 +23,12 @@ export const VoterLayout: React.FC = () => {
 
   const isTamil = accessibility.language === 'ta';
 
-  // Wallet state
+  // ✅ BUG FIX: Wallet state hooks MUST be declared before any conditional return
+  // (React Rules of Hooks — hooks cannot follow a conditional branch)
   const [walletAddress, setWalletAddress] = React.useState<string | null>(null);
   const [walletError, setWalletError] = React.useState<string | null>(null);
 
+  // Auth guard — placed AFTER all hook declarations
   if (!isVoterAuthenticated || !voterSession) {
     navigate('/voter/login', { replace: true });
     return null;
@@ -36,20 +38,11 @@ export const VoterLayout: React.FC = () => {
   const handleConnectWallet = async () => {
     try {
       setWalletError(null);
-
       const wallet = await connectWallet();
-
       setWalletAddress(wallet.address);
-
-      console.log('Wallet connected:', wallet.address);
-      console.log('Chain ID:', wallet.chainId);
     } catch (error) {
-      console.error('Wallet connection failed:', error);
-
       setWalletError(
-        error instanceof Error
-          ? error.message
-          : 'Failed to connect wallet'
+        error instanceof Error ? error.message : 'Failed to connect wallet'
       );
     }
   };
@@ -59,14 +52,33 @@ export const VoterLayout: React.FC = () => {
     navigate('/voter/login');
   };
 
+  // ✅ VOICE FIX: Wait for voices to load before speaking Tamil
   const speakText = (text: string) => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
 
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = isTamil ? 'ta-IN' : 'en-IN';
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = isTamil ? 'ta-IN' : 'en-IN';
+    u.rate = 0.9;
 
+    const speak = () => {
+      if (isTamil) {
+        const voices = window.speechSynthesis.getVoices();
+        const tamilVoice = voices.find((v) => v.lang.startsWith('ta'));
+        if (tamilVoice) u.voice = tamilVoice;
+      }
       window.speechSynthesis.speak(u);
+    };
+
+    // Voices may not be loaded yet (Chrome async loading)
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length > 0) {
+      speak();
+    } else {
+      window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.onvoiceschanged = null;
+        speak();
+      };
     }
   };
 
@@ -81,18 +93,16 @@ export const VoterLayout: React.FC = () => {
       className={`min-h-screen flex flex-col font-sans ${
         accessibility.highContrast
           ? 'bg-black text-amber-300'
-          : 'bg-slate-50 text-slate-900'
+          : 'bg-stone-50 text-stone-900'
       }`}
     >
-
-      {/* Top Accessibility & Assistance Bar */}
-      <div className="bg-slate-900 text-slate-200 text-xs py-2 px-4 border-b border-slate-800">
+      {/* ✅ UI FIX: Light theme top accessibility bar (was dark bg-slate-900) */}
+      <div className="bg-stone-100 text-stone-700 text-xs py-2 px-4 border-b border-stone-300">
         <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-2">
 
           <div className="flex items-center space-x-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-
-            <span className="font-semibold text-slate-300">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="font-semibold text-stone-600">
               {isTamil
                 ? 'தேசிய வாக்காளர் சேவை தளம் • அங்கீகரிக்கப்பட்ட அமர்வு'
                 : 'National Citizen Suffrage Portal • Authenticated Session'}
@@ -110,10 +120,10 @@ export const VoterLayout: React.FC = () => {
                     : 'Voter portal. Review election candidates and cast your ballot anonymously.'
                 )
               }
-              className="hover:text-white flex items-center space-x-1"
+              className="hover:text-stone-900 flex items-center space-x-1 transition-colors"
               title="Voice Assistance"
             >
-              <Volume2 className="w-3.5 h-3.5 text-amber-400" />
+              <Volume2 className="w-3.5 h-3.5 text-amber-600" />
               <span>
                 {isTamil ? 'ஒலி வழிகாட்டி' : 'Audio Guide'}
               </span>
@@ -127,10 +137,10 @@ export const VoterLayout: React.FC = () => {
                   highContrast: !prev.highContrast,
                 }))
               }
-              className={`px-2 py-0.5 rounded text-[11px] font-medium border ${
+              className={`px-2 py-0.5 rounded text-[11px] font-medium border transition-colors ${
                 accessibility.highContrast
-                  ? 'bg-amber-400 text-slate-950 font-bold'
-                  : 'border-slate-700 hover:border-slate-500'
+                  ? 'bg-amber-400 text-stone-950 font-bold border-amber-300'
+                  : 'border-stone-400 hover:border-stone-600 text-stone-600'
               }`}
             >
               {isTamil ? 'மாறுபாடு' : 'Contrast'}
@@ -139,10 +149,9 @@ export const VoterLayout: React.FC = () => {
             {/* Language Switch */}
             <button
               onClick={toggleLanguage}
-              className="flex items-center space-x-1 px-2.5 py-0.5 rounded bg-emerald-700 hover:bg-emerald-600 text-white font-semibold transition-colors"
+              className="flex items-center space-x-1 px-2.5 py-0.5 rounded bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition-colors"
             >
               <Globe className="w-3.5 h-3.5" />
-
               <span>
                 {isTamil ? 'English' : 'தமிழ்'}
               </span>
@@ -153,33 +162,31 @@ export const VoterLayout: React.FC = () => {
       </div>
 
       {/* Main Navigation Header */}
-      <header className="bg-white border-b border-slate-200 shadow-xs">
+      <header className="bg-white border-b border-stone-200 shadow-sm">
 
         <div className="max-w-6xl mx-auto px-4 py-3.5 flex items-center justify-between">
 
           {/* Logo and voter information */}
           <div className="flex items-center space-x-3">
 
-            <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+            <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-sm">
               <Vote className="w-6 h-6" />
             </div>
 
             <div>
-
-              <div className="text-sm font-bold text-slate-900">
+              <div className="text-sm font-bold text-stone-900">
                 {isTamil
                   ? 'தேசிய மின்னணு வாக்குப்பதிவு'
                   : 'National E-Voting Portal'}
               </div>
 
-              <div className="text-[11px] text-slate-500">
+              <div className="text-[11px] text-stone-500">
                 EPIC:{' '}
-                <span className="font-mono font-bold text-slate-700">
+                <span className="font-mono font-bold text-stone-700">
                   {voterSession.voterId}
                 </span>{' '}
                 • {voterSession.constituency}
               </div>
-
             </div>
           </div>
 
@@ -192,12 +199,12 @@ export const VoterLayout: React.FC = () => {
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
                 walletAddress
                   ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
+                  : 'bg-emerald-600 text-white hover:bg-emerald-700'
               }`}
             >
               {walletAddress
                 ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
-                : 'Connect Wallet'}
+                : isTamil ? 'பணப்பை இணைக்க' : 'Connect Wallet'}
             </button>
 
             {/* Dashboard */}
@@ -207,7 +214,7 @@ export const VoterLayout: React.FC = () => {
                 `px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
                   isActive
                     ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
-                    : 'text-slate-600 hover:bg-slate-100'
+                    : 'text-stone-600 hover:bg-stone-100'
                 }`
               }
             >
@@ -221,7 +228,7 @@ export const VoterLayout: React.FC = () => {
                 `px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
                   isActive
                     ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
-                    : 'text-slate-600 hover:bg-slate-100'
+                    : 'text-stone-600 hover:bg-stone-100'
                 }`
               }
             >
@@ -234,7 +241,6 @@ export const VoterLayout: React.FC = () => {
               className="ml-2 px-3 py-1.5 rounded-lg text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors flex items-center space-x-1"
             >
               <LogOut className="w-3.5 h-3.5" />
-
               <span>
                 {isTamil ? 'வெளியேறு' : 'Exit'}
               </span>
@@ -260,8 +266,8 @@ export const VoterLayout: React.FC = () => {
         <Outlet />
       </main>
 
-      {/* Footer */}
-      <footer className="bg-slate-900 text-slate-400 text-xs py-4 border-t border-slate-800 text-center">
+      {/* ✅ UI FIX: Light theme footer (was dark bg-slate-900) */}
+      <footer className="bg-stone-100 text-stone-500 text-xs py-4 border-t border-stone-200 text-center">
 
         <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
 
@@ -271,7 +277,7 @@ export const VoterLayout: React.FC = () => {
               : 'Election Commission of India • Constitutional Secret Ballot'}
           </span>
 
-          <span className="text-[11px] text-slate-500">
+          <span className="text-[11px] text-stone-400">
             Zero Voter-Candidate Linkage Enforced
           </span>
 

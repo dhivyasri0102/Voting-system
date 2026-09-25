@@ -1,9 +1,6 @@
 import React from 'react';
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { 
-  Shield, LayoutDashboard, Vote, Users, PlusCircle, Award, 
-  BarChart3, FileText, ShieldAlert, Cpu, LogOut, CheckCircle2, ChevronRight
-} from 'lucide-react';
+import { Shield, LayoutDashboard, PlusCircle, Users, FileText, LogOut, ChevronRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.js';
 
 export const AdminLayout: React.FC = () => {
@@ -31,13 +28,9 @@ export const AdminLayout: React.FC = () => {
 
   const navItems = [
     { label: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
-    { label: 'All Elections', path: '/admin/elections', icon: Vote },
     { label: 'Create Election', path: '/admin/elections/create', icon: PlusCircle },
-    { label: 'Candidate Management', path: '/admin/elections/ELEC-2026-CHENN-01/candidates', icon: Users },
-    { label: 'Election Results', path: '/admin/results/ELEC-2026-CHENN-01', icon: BarChart3 },
+    { label: 'Candidate Management', path: '/admin/candidates', icon: Users },
     { label: 'Audit Logs', path: '/admin/audit', icon: FileText },
-    { label: 'Security Events', path: '/admin/security', icon: ShieldAlert },
-    { label: 'System & Health', path: '/admin/system', icon: Cpu },
   ];
 
   return (
@@ -46,7 +39,7 @@ export const AdminLayout: React.FC = () => {
       <aside className="w-full md:w-64 bg-slate-900 text-slate-300 border-r border-slate-800 flex flex-col shrink-0">
         {/* Authority Brand Header */}
         <div className="p-5 border-b border-slate-800 flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+          <div className="w-10 h-10 rounded-xl bg-emerald-600/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
             <Shield className="w-6 h-6" />
           </div>
           <div>
@@ -58,7 +51,7 @@ export const AdminLayout: React.FC = () => {
         {/* Admin Session Identity Card */}
         <div className="px-4 py-3 bg-slate-950/60 border-b border-slate-800/80">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-blue-400 bg-blue-950 px-1.5 py-0.5 rounded border border-blue-800">
+            <span className="text-[10px] font-bold text-emerald-400 bg-stone-950 px-1.5 py-0.5 rounded border border-emerald-800">
               {adminSession.user.role}
             </span>
             <span className="text-[10px] text-slate-500 font-mono">MFA ACTIVE</span>
@@ -82,7 +75,7 @@ export const AdminLayout: React.FC = () => {
                 to={item.path}
                 className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                   isActive
-                    ? 'bg-blue-600 text-white shadow-sm'
+                    ? 'bg-emerald-600 text-white shadow-sm'
                     : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
                 }`}
               >

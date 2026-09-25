@@ -114,15 +114,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logoutAdmin = () => {
+    // ✅ BUG FIX: Capture token before clearing session (adminSession will be null after setState)
+    const tokenToRevoke = adminSession?.token;
     setAdminSession(null);
     sessionStorage.removeItem('evoting_admin_session');
+    // ✅ BUG FIX: Only remove — do NOT re-set to 'false', which left a stale string
+    // that isAdminAuthenticated check could misinterpret
     localStorage.removeItem('adminAuthenticated');
-    localStorage.setItem('adminAuthenticated', 'false');
     // Call server logout
-    if (adminSession?.token) {
+    if (tokenToRevoke) {
       fetch('/api/v1/auth/admin/logout', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${adminSession.token}` },
+        headers: { Authorization: `Bearer ${tokenToRevoke}` },
       }).catch(() => {});
     }
   };

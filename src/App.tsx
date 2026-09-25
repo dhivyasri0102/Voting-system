@@ -39,6 +39,7 @@ export default function App() {
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/elections" element={<AdminDashboard />} />
             <Route path="/admin/elections/create" element={<AdminElectionCreate />} />
+            <Route path="/admin/candidates" element={<AdminCandidateManagement />} />
             <Route path="/admin/elections/:electionId/candidates" element={<AdminCandidateManagement />} />
             <Route path="/admin/results/:electionId" element={<AdminResultsDashboard />} />
             <Route path="/admin/audit" element={<AdminAuditDashboard />} />

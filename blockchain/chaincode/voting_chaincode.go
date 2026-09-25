@@ -2,19 +2,17 @@
  * Smart Contract (Chaincode) for Hyperledger Fabric 2.5
  * Channel: election-channel
  * Contract: VotingChaincode
- * 
+ *
  * Enforces:
  * - Election state validation (must be OPEN)
  * - Single-use anonymous voting credential consumption
  * - Candidate validity
- * - Zero identity linkage (no Aadhaar, no voter ID on ledger)
+ * - Zero identity linkage (no voter ID on ledger)
  */
 
 package main
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"time"
