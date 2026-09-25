@@ -1,17 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useParams, useNavigate, Link, useOutletContext } from 'react-router-dom';
 import { 
-  Vote, ArrowLeft, ArrowRight, CheckCircle2, AlertCircle, 
-  Volume2, ShieldCheck, User
+  ArrowLeft, ArrowRight, AlertCircle, User
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.js';
 import { Candidate, Election } from '../../types/index.js';
+import { VoterLayoutContext } from './VoterLayout.js';
 
 export const VoterCandidateSelect: React.FC = () => {
   const { electionId } = useParams<{ electionId: string }>();
   const navigate = useNavigate();
   const { accessibility } = useAuth();
-  const isTamil = accessibility.language === 'ta';
+  const { 
+    speakText, 
+    voiceActive, 
+    isTanglish, 
+    registerVoiceHandler, 
+    unregisterVoiceHandler 
+  } = useOutletContext<VoterLayoutContext>();
 
   const [election, setElection] = useState<Election | null>(null);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -19,6 +25,7 @@ export const VoterCandidateSelect: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Fetch election and candidate details
   useEffect(() => {
     if (!electionId) return;
     setLoading(true);
@@ -39,19 +46,24 @@ export const VoterCandidateSelect: React.FC = () => {
       .finally(() => setLoading(false));
   }, [electionId]);
 
-  const speakCandidate = (c: Candidate) => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const text = `${c.name}, ${c.party || 'Independent'}. Symbol: ${c.symbol}. ${c.description || ''}`;
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = isTamil ? 'ta-IN' : 'en-IN';
-      window.speechSynthesis.speak(u);
+  const selectCandidateByIndex = useCallback((index: number) => {
+    if (index >= 0 && index < candidates.length) {
+      const c = candidates[index];
+      setSelectedCandidateId(c.id);
+      const msg = isTanglish
+        ? `Candidate number ${index + 1}, ${c.name} select aayiduchu. Party ${c.party || 'Independent'}. Next step-ku poga Next nu sollunga.`
+        : `Candidate number ${index + 1}, ${c.name} selected. Party ${c.party || 'Independent'}. Say Next to proceed.`;
+      speakText(msg, true);
     }
-  };
+  }, [candidates, isTanglish, speakText]);
 
-  const handleProceedToReview = () => {
+  const handleProceedToReview = useCallback(() => {
     if (!selectedCandidateId) {
-      setErrorMessage(isTamil ? 'தயவுசெய்து ஒரு வேட்பாளரைத் தேர்ந்தெடுக்கவும்.' : 'Please select a candidate before proceeding.');
+      const errMsg = isTanglish 
+        ? 'Oru candidate-ai select pannunga. Apram Next nu sollunga.' 
+        : 'Please select a candidate before proceeding.';
+      setErrorMessage(errMsg);
+      speakText(errMsg, true);
       return;
     }
 
@@ -62,7 +74,52 @@ export const VoterCandidateSelect: React.FC = () => {
     }));
 
     navigate(`/voter/election/${electionId}/ballot`);
-  };
+  }, [selectedCandidateId, electionId, navigate, isTanglish, speakText]);
+
+  // Page-entry voice announcement
+  const announcedRef = useRef(false);
+  useEffect(() => {
+    if (!loading && candidates.length > 0 && !announcedRef.current) {
+      if (voiceActive || accessibility.speechAssistance || accessibility.seniorCitizenMode) {
+        announcedRef.current = true;
+        const msg = isTanglish
+          ? `Vote panna virumbura candidate-ai select pannunga. Total-aa ${candidates.length} candidates irukaanga. Candidate select panna, Select candidate one, two, illa three nu sollunga. Candidate select pannitu Next nu sollunga.`
+          : `Please select your candidate. There are ${candidates.length} candidates available. Say select candidate one, two, or three to pick, then say Next to review.`;
+        speakText(msg, true);
+      }
+    }
+  }, [loading, candidates.length, voiceActive, accessibility.speechAssistance, accessibility.seniorCitizenMode, isTanglish, speakText]);
+
+  // Register voice navigation commands
+  useEffect(() => {
+    const handleVoiceCommand = (cmd: string) => {
+      if (cmd === 'NEXT') {
+        handleProceedToReview();
+      } else if (cmd === 'BACK') {
+        navigate('/voter/dashboard');
+      } else if (cmd === 'REPEAT') {
+        const msg = isTanglish
+          ? `Vote panna candidate-ai select pannunga. Select candidate one, two, illa three nu sollunga. Next nu sonnaa review page pogalam.`
+          : `Select your candidate. Say select candidate one, two, or three, then say Next to proceed.`;
+        speakText(msg, true);
+      } else if (cmd === 'SELECT_1') {
+        selectCandidateByIndex(0);
+      } else if (cmd === 'SELECT_2') {
+        selectCandidateByIndex(1);
+      } else if (cmd === 'SELECT_3') {
+        selectCandidateByIndex(2);
+      } else if (cmd === 'SELECT_4') {
+        selectCandidateByIndex(3);
+      } else if (cmd === 'SELECT_5') {
+        selectCandidateByIndex(4);
+      }
+    };
+
+    registerVoiceHandler(handleVoiceCommand);
+    return () => {
+      unregisterVoiceHandler();
+    };
+  }, [registerVoiceHandler, unregisterVoiceHandler, handleProceedToReview, selectCandidateByIndex, navigate, isTanglish, speakText]);
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -72,7 +129,7 @@ export const VoterCandidateSelect: React.FC = () => {
           className="text-xs text-slate-500 hover:text-slate-800 flex items-center space-x-1"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          <span>{isTamil ? 'முதன்மைப் பக்கத்திற்கு திரும்பு' : 'Back to Voter Dashboard'}</span>
+          <span>{isTanglish ? 'Voter Dashboard-ku thirumba' : 'Back to Voter Dashboard'}</span>
         </Link>
       </div>
 
@@ -80,19 +137,19 @@ export const VoterCandidateSelect: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-2">
           <div>
             <span className="text-xs font-mono font-bold text-emerald-700 uppercase">
-              {isTamil ? 'அதிகாரப்பூர்வ வாக்குச்சீட்டு' : 'Official Electronic Ballot'}
+              {isTanglish ? 'Adhigaarappoorva Electronic Ballot' : 'Official Electronic Ballot'}
             </span>
             <h1 className="text-xl font-bold text-slate-900 mt-1">
               {election?.title || 'Constituency Election'}
             </h1>
             <p className="text-xs text-slate-500">
-              Constituency: <strong>{election?.constituency}</strong>. {isTamil ? 'உங்கள் விருப்பமான ஒரு வேட்பாளரைத் தேர்ந்தெடுக்கவும்.' : 'Select exactly one candidate of your choice.'}
+              Constituency: <strong>{election?.constituency}</strong>. {isTanglish ? 'Ungal viruppamana oru candidate-ai select pannunga.' : 'Select exactly one candidate of your choice.'}
             </p>
           </div>
 
           <div className="text-right">
             <span className="text-xs font-bold text-slate-500">
-              {isTamil ? 'மொத்த வேட்பாளர்கள்' : 'Candidates'}: {candidates.length}
+              {isTanglish ? 'Total Candidates' : 'Candidates'}: {candidates.length}
             </span>
           </div>
         </div>
@@ -104,14 +161,22 @@ export const VoterCandidateSelect: React.FC = () => {
           </div>
         )}
 
-        {/* Candidate List (Section 23 & 24 Requirement) */}
+        {/* Candidate List */}
         <div className="mt-6 space-y-3">
-          {candidates.map((c) => {
+          {candidates.map((c, idx) => {
             const isSelected = selectedCandidateId === c.id;
             return (
               <label
                 key={c.id}
-                onClick={() => setSelectedCandidateId(c.id)}
+                onClick={() => {
+                  setSelectedCandidateId(c.id);
+                  if (voiceActive || accessibility.speechAssistance || accessibility.seniorCitizenMode) {
+                    const msg = isTanglish
+                      ? `${c.name} select aayiduchu. Party: ${c.party || 'Independent'}. Symbol: ${c.symbol}. Next nu sollunga review panna.`
+                      : `Selected: ${c.name}. Party: ${c.party || 'Independent'}. Symbol: ${c.symbol}. Say Next to review.`;
+                    speakText(msg, true);
+                  }
+                }}
                 className={`p-4 rounded-2xl border-2 flex items-center justify-between gap-4 cursor-pointer transition-all ${
                   isSelected
                     ? 'border-emerald-600 bg-emerald-50/50 shadow-sm'
@@ -119,6 +184,11 @@ export const VoterCandidateSelect: React.FC = () => {
                 }`}
               >
                 <div className="flex items-center space-x-4">
+                  {/* Candidate index badge */}
+                  <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-700">
+                    {idx + 1}
+                  </div>
+
                   {/* Radio control */}
                   <input
                     type="radio"
@@ -156,24 +226,12 @@ export const VoterCandidateSelect: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Symbol & Audio button */}
+                {/* Symbol */}
                 <div className="flex items-center space-x-3 shrink-0">
                   <div className="text-right">
-                    <span className="text-[10px] text-slate-400 block">{isTamil ? 'சின்னம்' : 'Symbol'}</span>
+                    <span className="text-[10px] text-slate-400 block">Symbol</span>
                     <span className="text-xs font-bold text-slate-800">{c.symbol}</span>
                   </div>
-
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      speakCandidate(c);
-                    }}
-                    className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"
-                    title="Audio description"
-                  >
-                    <Volume2 className="w-4 h-4" />
-                  </button>
                 </div>
               </label>
             );
@@ -186,7 +244,7 @@ export const VoterCandidateSelect: React.FC = () => {
             to="/voter/dashboard"
             className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold"
           >
-            {isTamil ? 'ரத்து செய்க' : 'Cancel'}
+            {isTanglish ? 'Cancel' : 'Cancel'}
           </Link>
 
           <button
@@ -195,7 +253,7 @@ export const VoterCandidateSelect: React.FC = () => {
             onClick={handleProceedToReview}
             className="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm flex items-center space-x-2 shadow-md disabled:opacity-40 transition-all"
           >
-            <span>{isTamil ? 'வாக்கு மறுஆய்வு செய்க' : 'Review Ballot Selection'}</span>
+            <span>{isTanglish ? 'Ballot Review Panna' : 'Review Ballot Selection'}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>

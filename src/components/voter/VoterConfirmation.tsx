@@ -1,16 +1,67 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, Link, useOutletContext } from 'react-router-dom';
 import { 
-  CheckCircle2, ShieldCheck, Copy, Check, Lock, 
-  ArrowRight, LogOut, FileCheck, Share2
+  CheckCircle2, Copy, Check, Lock, 
+  LogOut
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.js';
+import { VoterLayoutContext } from './VoterLayout.js';
 
 export const VoterConfirmation: React.FC = () => {
   const navigate = useNavigate();
   const { voterSession, logoutVoter, accessibility } = useAuth();
-  const isTamil = accessibility.language === 'ta';
   const [copied, setCopied] = useState<boolean>(false);
+  const { 
+    speakText, 
+    voiceActive, 
+    isTanglish, 
+    registerVoiceHandler, 
+    unregisterVoiceHandler, 
+    stopVoiceAssistant 
+  } = useOutletContext<VoterLayoutContext>();
+
+  // On mount: announce success in Tanglish or English.
+  // NEVER announce candidate name, party, or vote choice.
+  const announcedRef = useRef(false);
+  useEffect(() => {
+    if (!announcedRef.current) {
+      announcedRef.current = true;
+      if (voiceActive || accessibility.speechAssistance || accessibility.seniorCitizenMode) {
+        const msg = isTanglish
+          ? 'Ungaloda vote successfully record aayiduchu. Cryptographic receipt screen-la display aagiduchu. Voting process complete aayiduchu. Nandri.'
+          : 'Your vote has been successfully recorded on the blockchain. Your cryptographic receipt is displayed on screen. Thank you for voting.';
+        speakText(msg, true);
+      }
+
+      // Automatically stop voice assistant after voting is completed
+      const timer = setTimeout(() => {
+        stopVoiceAssistant();
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [voiceActive, accessibility.speechAssistance, accessibility.seniorCitizenMode, isTanglish, speakText, stopVoiceAssistant]);
+
+  // Register command handler for repeat or exit
+  useEffect(() => {
+    const handleVoiceCommand = (cmd: string) => {
+      if (cmd === 'REPEAT') {
+        const msg = isTanglish
+          ? 'Ungaloda vote successfully record aayiduchu. Blockchain receipt screen-la irukku.'
+          : 'Your vote has been successfully recorded on the blockchain.';
+        speakText(msg, true);
+      } else if (cmd === 'BACK' || cmd === 'STOP' || cmd === 'CANCEL') {
+        stopVoiceAssistant();
+        logoutVoter();
+        navigate('/');
+      }
+    };
+
+    registerVoiceHandler(handleVoiceCommand);
+    return () => {
+      unregisterVoiceHandler();
+    };
+  }, [registerVoiceHandler, unregisterVoiceHandler, stopVoiceAssistant, logoutVoter, navigate, isTanglish, speakText]);
 
   const receipt = voterSession?.lastVoteReceipt || {
     transactionReference: '0x8f3c...b129',
@@ -36,23 +87,23 @@ export const VoterConfirmation: React.FC = () => {
 
         <div>
           <span className="text-xs font-mono font-bold text-emerald-700 uppercase tracking-wider">
-            {isTamil ? 'அரசியலமைப்பு வாக்குப்பதிவு முடிந்தது' : 'Consensus Confirmation'}
+            {isTanglish ? 'Consensus Confirmation' : 'Consensus Confirmation'}
           </span>
           <h1 className="text-2xl font-black text-slate-900 mt-1">
-            {isTamil ? 'உங்கள் வாக்கு வெற்றிகரமாக பதிவு செய்யப்பட்டது!' : 'Vote Recorded Successfully on Blockchain'}
+            {isTanglish ? 'Ungaloda Vote Successfully Record Aayiduchu!' : 'Vote Recorded Successfully on Blockchain'}
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            {isTamil
-              ? 'உங்கள் வாக்கு ஹைப்பர்லெட்ஜர் ஃபேப்ரிக் பிளாக்செயினில் நிரந்தரமாகப் பதிவு செய்யப்பட்டுள்ளது.'
+            {isTanglish
+              ? 'Ungal vote permissioned blockchain ledger-il permanently register aagiduchu.'
               : 'Cryptographically anchored into the tamper-proof permissioned ledger.'}
           </p>
         </div>
 
-        {/* Blockchain Receipt Details (Section 28 Requirement) */}
+        {/* Blockchain Receipt Details */}
         <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 text-left space-y-3 text-xs">
           <div className="flex items-center justify-between pb-2 border-b border-slate-200">
             <span className="font-bold text-slate-800">
-              {isTamil ? 'பிளாக்செயின் பரிவர்த்தனை ரசீது' : 'Cryptographic Suffrage Receipt'}
+              {isTanglish ? 'Blockchain Transaction Receipt' : 'Cryptographic Suffrage Receipt'}
             </span>
             <span className="text-[10px] font-mono text-emerald-700 font-bold bg-emerald-100 px-2 py-0.5 rounded">
               COMMITTED
@@ -61,7 +112,7 @@ export const VoterConfirmation: React.FC = () => {
 
           <div>
             <span className="text-slate-500 text-[11px] block">
-              {isTamil ? 'பரிவர்த்தனை குறிப்பு (Tx Reference)' : 'Transaction Reference Hash'}:
+              {isTanglish ? 'Transaction Reference Hash' : 'Transaction Reference Hash'}:
             </span>
             <div className="flex items-center justify-between mt-0.5 bg-white p-2 rounded-lg border border-slate-200 font-mono text-slate-800 text-[11px] truncate">
               <span className="truncate">{receipt.transactionReference}</span>
@@ -78,11 +129,11 @@ export const VoterConfirmation: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-3 pt-1 text-[11px]">
             <div>
-              <span className="text-slate-500">{isTamil ? 'பிளாக் எண்' : 'Block Height'}:</span>
+              <span className="text-slate-500">{isTanglish ? 'Block Height' : 'Block Height'}:</span>
               <p className="font-mono font-bold text-slate-800">#{receipt.blockIndex}</p>
             </div>
             <div>
-              <span className="text-slate-500">{isTamil ? 'நேரம்' : 'Committed Timestamp'}:</span>
+              <span className="text-slate-500">{isTanglish ? 'Timestamp' : 'Committed Timestamp'}:</span>
               <p className="font-mono font-bold text-slate-800">
                 {new Date(receipt.timestamp).toLocaleTimeString()}
               </p>
@@ -98,9 +149,9 @@ export const VoterConfirmation: React.FC = () => {
         <div className="p-4 rounded-xl bg-purple-50 border border-purple-200 text-purple-900 text-xs flex items-start space-x-2.5 text-left">
           <Lock className="w-4 h-4 text-purple-700 shrink-0 mt-0.5" />
           <div className="text-[11px] leading-relaxed">
-            <strong>{isTamil ? 'ரகசிய வாக்கு அறிவிப்பு' : 'Statutory Privacy Note'}:</strong>{' '}
-            {isTamil
-              ? 'இந்த ரசீதில் உங்கள் வேட்பாளர் தேர்வு குறிப்பிடப்படாது. உங்களைத் தவிர வேறு எவராலும் நீங்கள் யாருக்கு வாக்களித்தீர்கள் என்பதை அறிய முடியாது.'
+            <strong>{isTanglish ? 'Privacy Note' : 'Statutory Privacy Note'}:</strong>{' '}
+            {isTanglish
+              ? 'Indha receipt-il neenga yaaru-ku vote potteenga nu disclose aagadhu. Vote completely secret & anonymous.'
               : 'As mandated by statutory election privacy law, this receipt certifies that you exercised your democratic franchise, without disclosing or recording which candidate was chosen.'}
           </div>
         </div>
@@ -111,19 +162,20 @@ export const VoterConfirmation: React.FC = () => {
             to="/voter/status"
             className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors"
           >
-            {isTamil ? 'வாக்கு நிலையை சரிபார்க்க' : 'View Registered Status'}
+            {isTanglish ? 'Voting Status Paarka' : 'View Registered Status'}
           </Link>
 
           <button
             type="button"
             onClick={() => {
+              stopVoiceAssistant();
               logoutVoter();
               navigate('/');
             }}
             className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-colors flex items-center justify-center space-x-1.5"
           >
             <LogOut className="w-4 h-4" />
-            <span>{isTamil ? 'பாதுகாப்பாக வெளியேறு' : 'Exit Safely'}</span>
+            <span>{isTanglish ? 'Exit Pannunga' : 'Exit Safely'}</span>
           </button>
         </div>
       </div>
