@@ -238,4 +238,40 @@ export interface VoterProfile {
   state: string;
   hasVoted: boolean;
   issuedTokenHash?: string;
+  name?: string;
+  age?: number;
+  address?: string;
+  photo?: string;
+  maskedAadhaar?: string;
+}
+
+export interface VoteHistoryItem {
+  voteNumber: number;
+  electionId: string;
+  electionTitle: string;
+  constituency: string;
+  status: 'RECORDED' | 'NOT_YET_VOTED';
+  blockchainStatus: 'CONFIRMED' | 'PENDING' | 'REJECTED';
+  transactionReference: string;
+  blockIndex: number;
+  blockHash: string;
+  nonce?: string;
+  timestamp: string;
+}
+
+export interface AdminVoteRecord {
+  blockIndex: number;
+  blockHash: string;
+  previousHash: string;
+  timestamp: string;
+  channelId: string;
+  merkleRoot: string;
+  validatorSignature: string;
+  transactionReference: string;
+  electionId: string;
+  ballotCommitment: string;
+  credentialHash: string;
+  candidateId: string;
+  status: string;
+  blockchainStatus: string;
 }
