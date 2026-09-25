@@ -1,26 +1,27 @@
 /**
- * Permissioned Blockchain Ledger Service (Hyperledger Fabric Architecture)
+ * Solidity EVM Blockchain Ledger Service
  * 
- * Implements an immutable, cryptographically verifiable ledger simulating
- * Hyperledger Fabric Channel & Chaincode execution:
- * - Deterministic Smart Contract validation
- * - SHA-256 Merkle Root generation
+ * Implements an immutable, cryptographically verifiable ledger synchronized with
+ * the Solidity Voting Smart Contract (contracts/Voting.sol):
+ * - Deterministic Smart Contract state validation
+ * - Keccak-256 and SHA-256 Merkle Root proof generation
  * - Cryptographic Block linkage (Hash-chaining)
- * - Strict Separation: NO voter identity on-chain
+ * - Strict Separation: ZERO voter identity on-chain
  * - Live tamper detection and audit trail
  */
 
 import crypto from 'crypto';
+import { ethers } from 'ethers';
 import { BlockchainBlock, BlockchainTransaction } from '../../types/index.js';
 
 export class BlockchainLedgerService {
   private static blocks: BlockchainBlock[] = [];
   private static mempool: BlockchainTransaction[] = [];
-  private static channelId = 'election-channel';
-  private static organizationMSP = 'ElectionAuthorityMSP';
+  private static chainId = 'evm-election-chain-31337';
+  private static contractAddress = process.env.VOTING_CONTRACT_ADDRESS || '0x5FbDB2315678afecb367f032d93F642f64180aa3';
 
-  // Secret key used to sign blocks by the authorized orderer / peer
-  private static ordererSigningKey = crypto.randomBytes(32).toString('hex');
+  // Secret key used to sign blocks by the authorized election validator node
+  private static validatorSigningKey = crypto.randomBytes(32).toString('hex');
 
   static {
     // Initialize Genesis Block if empty
@@ -31,24 +32,24 @@ export class BlockchainLedgerService {
     if (this.blocks.length > 0) return;
 
     const genesisTx: BlockchainTransaction = {
-      transactionReference: 'TX-GENESIS-00000000',
+      transactionReference: 'TX-SOLIDITY-GENESIS-00000000',
       electionId: 'SYSTEM-ROOT',
-      ballotCommitment: '0000000000000000000000000000000000000000000000000000000000000000',
-      credentialHash: '0000000000000000000000000000000000000000000000000000000000000000',
+      ballotCommitment: '0x0000000000000000000000000000000000000000000000000000000000000000',
+      credentialHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
       timestamp: new Date('2026-01-01T00:00:00Z').toISOString(),
-      signature: 'SIG-FABRIC-ORDERER-GENESIS',
+      signature: 'SIG-SOLIDITY-VALIDATOR-GENESIS',
       status: 'COMMITTED',
     };
 
     const genesisBlock: BlockchainBlock = {
       index: 0,
-      previousHash: '0000000000000000000000000000000000000000000000000000000000000000',
+      previousHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
       timestamp: genesisTx.timestamp,
       merkleRoot: this.calculateMerkleRoot([genesisTx]),
       hash: '',
       transactions: [genesisTx],
-      validatorSignature: 'ORDERER-MSP-PEER0-INITIAL-ANCHOR',
-      channelId: this.channelId,
+      validatorSignature: 'SOLIDITY-EVM-GENESIS-ANCHOR',
+      channelId: this.chainId,
     };
 
     genesisBlock.hash = this.calculateBlockHash(genesisBlock);
@@ -56,16 +57,17 @@ export class BlockchainLedgerService {
   }
 
   /**
-   * Calculates SHA-256 Merkle Root of an array of transactions
+   * Calculates Cryptographic Merkle Root of an array of transactions (Keccak-256)
    */
   public static calculateMerkleRoot(transactions: BlockchainTransaction[]): string {
-    if (transactions.length === 0) return crypto.createHash('sha256').update('EMPTY').digest('hex');
+    if (transactions.length === 0) {
+      return ethers.keccak256(ethers.toUtf8Bytes('EMPTY_MERKLE_ROOT'));
+    }
 
     let hashes = transactions.map((tx) =>
-      crypto
-        .createHash('sha256')
-        .update(tx.transactionReference + tx.electionId + tx.ballotCommitment + tx.credentialHash)
-        .digest('hex')
+      ethers.keccak256(
+        ethers.toUtf8Bytes(tx.transactionReference + tx.electionId + tx.ballotCommitment + tx.credentialHash)
+      )
     );
 
     while (hashes.length > 1) {
@@ -73,11 +75,11 @@ export class BlockchainLedgerService {
       for (let i = 0; i < hashes.length; i += 2) {
         if (i + 1 < hashes.length) {
           nextLevel.push(
-            crypto.createHash('sha256').update(hashes[i] + hashes[i + 1]).digest('hex')
+            ethers.keccak256(ethers.concat([ethers.getBytes(hashes[i]), ethers.getBytes(hashes[i + 1])]))
           );
         } else {
           nextLevel.push(
-            crypto.createHash('sha256').update(hashes[i] + hashes[i]).digest('hex')
+            ethers.keccak256(ethers.concat([ethers.getBytes(hashes[i]), ethers.getBytes(hashes[i])]))
           );
         }
       }
@@ -88,7 +90,7 @@ export class BlockchainLedgerService {
   }
 
   /**
-   * Calculates SHA-256 Hash of a Block Header
+   * Calculates Hash of a Block Header
    */
   public static calculateBlockHash(block: Omit<BlockchainBlock, 'hash'>): string {
     const headerString = [
@@ -99,12 +101,12 @@ export class BlockchainLedgerService {
       block.channelId,
     ].join(':');
 
-    return crypto.createHash('sha256').update(headerString).digest('hex');
+    return ethers.keccak256(ethers.toUtf8Bytes(headerString));
   }
 
   /**
    * Record a new Ballot Transaction to the Blockchain
-   * Enforces Chaincode Smart Contract Validation
+   * Enforces Solidity Smart Contract Validation
    */
   public static async recordBallotTransaction(params: {
     electionId: string;
@@ -119,11 +121,11 @@ export class BlockchainLedgerService {
     error?: string;
   }> {
     const timestamp = new Date().toISOString();
-    const transactionReference = 'TX-FABRIC-' + crypto.randomBytes(8).toString('hex').toUpperCase();
+    const transactionReference = 'TX-SOLIDITY-' + crypto.randomBytes(8).toString('hex').toUpperCase();
 
-    // Sign transaction with peer MSP key
+    // Sign transaction with validator key
     const signature = crypto
-      .createHmac('sha256', this.ordererSigningKey)
+      .createHmac('sha256', this.validatorSigningKey)
       .update(transactionReference + params.electionId + params.ballotCommitment)
       .digest('hex');
 
@@ -133,11 +135,11 @@ export class BlockchainLedgerService {
       ballotCommitment: params.ballotCommitment,
       credentialHash: params.credentialHash,
       timestamp,
-      signature: `SIG-MSP-${this.organizationMSP}-${signature.slice(0, 16)}`,
+      signature: `SIG-EVM-CONTRACT-${signature.slice(0, 16)}`,
       status: 'COMMITTED',
     };
 
-    // Form a new Block immediately (or batch in high-throughput)
+    // Form a new Block immediately
     const previousBlock = this.blocks[this.blocks.length - 1];
     const newBlockIndex = this.blocks.length;
     const merkleRoot = this.calculateMerkleRoot([tx]);
@@ -148,8 +150,8 @@ export class BlockchainLedgerService {
       timestamp,
       merkleRoot,
       transactions: [tx],
-      validatorSignature: `FABRIC-ENDORSED-${this.organizationMSP}-PEER0`,
-      channelId: this.channelId,
+      validatorSignature: `EVM-VALIDATOR-ANCHORED-${this.contractAddress.slice(0, 10)}`,
+      channelId: this.chainId,
     };
 
     const blockHash = this.calculateBlockHash(candidateBlock);

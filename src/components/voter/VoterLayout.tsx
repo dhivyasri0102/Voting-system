@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.js';
 import { connectWallet } from '../../services/blockchain.js';
+import { VoiceAssistant } from '../../services/VoiceAssistant.js';
 
 export const VoterLayout: React.FC = () => {
   const navigate = useNavigate();
@@ -52,34 +53,8 @@ export const VoterLayout: React.FC = () => {
     navigate('/voter/login');
   };
 
-  // ✅ VOICE FIX: Wait for voices to load before speaking Tamil
   const speakText = (text: string) => {
-    if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = isTamil ? 'ta-IN' : 'en-IN';
-    u.rate = 0.9;
-
-    const speak = () => {
-      if (isTamil) {
-        const voices = window.speechSynthesis.getVoices();
-        const tamilVoice = voices.find((v) => v.lang.startsWith('ta'));
-        if (tamilVoice) u.voice = tamilVoice;
-      }
-      window.speechSynthesis.speak(u);
-    };
-
-    // Voices may not be loaded yet (Chrome async loading)
-    const voices = window.speechSynthesis.getVoices();
-    if (voices.length > 0) {
-      speak();
-    } else {
-      window.speechSynthesis.onvoiceschanged = () => {
-        window.speechSynthesis.onvoiceschanged = null;
-        speak();
-      };
-    }
+    VoiceAssistant.speak(text, isTamil ? 'ta' : 'en');
   };
 
   const getFontSizeClass = () => {

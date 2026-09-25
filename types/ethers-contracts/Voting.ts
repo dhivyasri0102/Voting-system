@@ -13,52 +13,92 @@ export declare namespace Voting {
     }
 
   export interface VotingInterface extends Interface {
-    getFunction(nameOrSignature: "addCandidate" | "candidateCount" | "candidates" | "disableCandidate" | "editCandidate" | "electionEnded" | "electionStarted" | "endElection" | "getAllCandidates" | "getCandidate" | "hasAddressVoted" | "hasVoted" | "isNullifierConsumed" | "owner" | "startElection" | "vote" | "voteWithCommitment"): FunctionFragment;
+    getFunction(nameOrSignature: "addCandidate" | "admin" | "anchorAuditProof" | "auditAnchors" | "auditors" | "candidateCount" | "candidates" | "disableCandidate" | "editCandidate" | "electionEndTime" | "electionEnded" | "electionOfficers" | "electionStartTime" | "electionStarted" | "emergencyPause" | "emergencyUnpause" | "endElection" | "getAllCandidates" | "getAuditAnchor" | "getCandidate" | "hasAddressVoted" | "hasVoted" | "isNullifierConsumed" | "isNullifierUsed" | "owner" | "paused" | "setAuditor" | "setElectionOfficer" | "startElection" | "vote" | "voteWithCommitment"): FunctionFragment;
 
-    getEvent(nameOrSignatureOrTopic: "BallotCast" | "CandidateAdded" | "CandidateDisabled" | "CandidateUpdated" | "ElectionEnded" | "ElectionStarted"): EventFragment;
+    getEvent(nameOrSignatureOrTopic: "AuditRootAnchored" | "BallotCast" | "CandidateAdded" | "CandidateDisabled" | "CandidateUpdated" | "ElectionEnded" | "ElectionStarted" | "EmergencyPaused" | "EmergencyUnpaused" | "RoleGranted" | "RoleRevoked"): EventFragment;
 
     encodeFunctionData(functionFragment: 'addCandidate', values: [string, string, string, string]): string;
+encodeFunctionData(functionFragment: 'admin', values?: undefined): string;
+encodeFunctionData(functionFragment: 'anchorAuditProof', values: [string, BytesLike, BigNumberish]): string;
+encodeFunctionData(functionFragment: 'auditAnchors', values: [string]): string;
+encodeFunctionData(functionFragment: 'auditors', values: [AddressLike]): string;
 encodeFunctionData(functionFragment: 'candidateCount', values?: undefined): string;
 encodeFunctionData(functionFragment: 'candidates', values: [BigNumberish]): string;
 encodeFunctionData(functionFragment: 'disableCandidate', values: [BigNumberish]): string;
 encodeFunctionData(functionFragment: 'editCandidate', values: [BigNumberish, string, string, string, string]): string;
+encodeFunctionData(functionFragment: 'electionEndTime', values?: undefined): string;
 encodeFunctionData(functionFragment: 'electionEnded', values?: undefined): string;
+encodeFunctionData(functionFragment: 'electionOfficers', values: [AddressLike]): string;
+encodeFunctionData(functionFragment: 'electionStartTime', values?: undefined): string;
 encodeFunctionData(functionFragment: 'electionStarted', values?: undefined): string;
+encodeFunctionData(functionFragment: 'emergencyPause', values: [string]): string;
+encodeFunctionData(functionFragment: 'emergencyUnpause', values?: undefined): string;
 encodeFunctionData(functionFragment: 'endElection', values?: undefined): string;
 encodeFunctionData(functionFragment: 'getAllCandidates', values?: undefined): string;
+encodeFunctionData(functionFragment: 'getAuditAnchor', values: [string]): string;
 encodeFunctionData(functionFragment: 'getCandidate', values: [BigNumberish]): string;
 encodeFunctionData(functionFragment: 'hasAddressVoted', values: [AddressLike]): string;
 encodeFunctionData(functionFragment: 'hasVoted', values: [AddressLike]): string;
 encodeFunctionData(functionFragment: 'isNullifierConsumed', values: [BytesLike]): string;
+encodeFunctionData(functionFragment: 'isNullifierUsed', values: [BytesLike]): string;
 encodeFunctionData(functionFragment: 'owner', values?: undefined): string;
+encodeFunctionData(functionFragment: 'paused', values?: undefined): string;
+encodeFunctionData(functionFragment: 'setAuditor', values: [AddressLike, boolean]): string;
+encodeFunctionData(functionFragment: 'setElectionOfficer', values: [AddressLike, boolean]): string;
 encodeFunctionData(functionFragment: 'startElection', values?: undefined): string;
 encodeFunctionData(functionFragment: 'vote', values: [BigNumberish]): string;
 encodeFunctionData(functionFragment: 'voteWithCommitment', values: [BytesLike, BytesLike, BigNumberish]): string;
 
     decodeFunctionResult(functionFragment: 'addCandidate', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'admin', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'anchorAuditProof', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'auditAnchors', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'auditors', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'candidateCount', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'candidates', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'disableCandidate', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'editCandidate', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'electionEndTime', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'electionEnded', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'electionOfficers', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'electionStartTime', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'electionStarted', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'emergencyPause', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'emergencyUnpause', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'endElection', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'getAllCandidates', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'getAuditAnchor', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'getCandidate', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'hasAddressVoted', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'hasVoted', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'isNullifierConsumed', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'isNullifierUsed', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'owner', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'paused', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'setAuditor', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'setElectionOfficer', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'startElection', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'vote', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'voteWithCommitment', data: BytesLike): Result;
   }
 
   
+    export namespace AuditRootAnchoredEvent {
+      export type InputTuple = [electionId: string, merkleRoot: BytesLike, totalBallots: BigNumberish, auditor: AddressLike, timestamp: BigNumberish];
+      export type OutputTuple = [electionId: string, merkleRoot: string, totalBallots: bigint, auditor: string, timestamp: bigint];
+      export interface OutputObject {electionId: string, merkleRoot: string, totalBallots: bigint, auditor: string, timestamp: bigint };
+      export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>
+      export type Filter = TypedDeferredTopicFilter<Event>
+      export type Log = TypedEventLog<Event>
+      export type LogDescription = TypedLogDescription<Event>
+    }
+
+  
+
     export namespace BallotCastEvent {
-      export type InputTuple = [ballotCommitment: BytesLike, candidateId: BigNumberish, timestamp: BigNumberish];
-      export type OutputTuple = [ballotCommitment: string, candidateId: bigint, timestamp: bigint];
-      export interface OutputObject {ballotCommitment: string, candidateId: bigint, timestamp: bigint };
+      export type InputTuple = [ballotCommitment: BytesLike, nullifierHash: BytesLike, candidateId: BigNumberish, timestamp: BigNumberish];
+      export type OutputTuple = [ballotCommitment: string, nullifierHash: string, candidateId: bigint, timestamp: bigint];
+      export interface OutputObject {ballotCommitment: string, nullifierHash: string, candidateId: bigint, timestamp: bigint };
       export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>
       export type Filter = TypedDeferredTopicFilter<Event>
       export type Log = TypedEventLog<Event>
@@ -68,9 +108,9 @@ decodeFunctionResult(functionFragment: 'voteWithCommitment', data: BytesLike): R
   
 
     export namespace CandidateAddedEvent {
-      export type InputTuple = [candidateId: BigNumberish, name: string, party: string];
-      export type OutputTuple = [candidateId: bigint, name: string, party: string];
-      export interface OutputObject {candidateId: bigint, name: string, party: string };
+      export type InputTuple = [candidateId: BigNumberish, name: string, party: string, symbol: string];
+      export type OutputTuple = [candidateId: bigint, name: string, party: string, symbol: string];
+      export interface OutputObject {candidateId: bigint, name: string, party: string, symbol: string };
       export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>
       export type Filter = TypedDeferredTopicFilter<Event>
       export type Log = TypedEventLog<Event>
@@ -104,9 +144,9 @@ decodeFunctionResult(functionFragment: 'voteWithCommitment', data: BytesLike): R
   
 
     export namespace ElectionEndedEvent {
-      export type InputTuple = [timestamp: BigNumberish];
-      export type OutputTuple = [timestamp: bigint];
-      export interface OutputObject {timestamp: bigint };
+      export type InputTuple = [timestamp: BigNumberish, authorizedOfficer: AddressLike];
+      export type OutputTuple = [timestamp: bigint, authorizedOfficer: string];
+      export interface OutputObject {timestamp: bigint, authorizedOfficer: string };
       export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>
       export type Filter = TypedDeferredTopicFilter<Event>
       export type Log = TypedEventLog<Event>
@@ -116,9 +156,57 @@ decodeFunctionResult(functionFragment: 'voteWithCommitment', data: BytesLike): R
   
 
     export namespace ElectionStartedEvent {
-      export type InputTuple = [timestamp: BigNumberish];
-      export type OutputTuple = [timestamp: bigint];
-      export interface OutputObject {timestamp: bigint };
+      export type InputTuple = [timestamp: BigNumberish, authorizedOfficer: AddressLike];
+      export type OutputTuple = [timestamp: bigint, authorizedOfficer: string];
+      export interface OutputObject {timestamp: bigint, authorizedOfficer: string };
+      export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>
+      export type Filter = TypedDeferredTopicFilter<Event>
+      export type Log = TypedEventLog<Event>
+      export type LogDescription = TypedLogDescription<Event>
+    }
+
+  
+
+    export namespace EmergencyPausedEvent {
+      export type InputTuple = [triggeredBy: AddressLike, timestamp: BigNumberish, reason: string];
+      export type OutputTuple = [triggeredBy: string, timestamp: bigint, reason: string];
+      export interface OutputObject {triggeredBy: string, timestamp: bigint, reason: string };
+      export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>
+      export type Filter = TypedDeferredTopicFilter<Event>
+      export type Log = TypedEventLog<Event>
+      export type LogDescription = TypedLogDescription<Event>
+    }
+
+  
+
+    export namespace EmergencyUnpausedEvent {
+      export type InputTuple = [triggeredBy: AddressLike, timestamp: BigNumberish];
+      export type OutputTuple = [triggeredBy: string, timestamp: bigint];
+      export interface OutputObject {triggeredBy: string, timestamp: bigint };
+      export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>
+      export type Filter = TypedDeferredTopicFilter<Event>
+      export type Log = TypedEventLog<Event>
+      export type LogDescription = TypedLogDescription<Event>
+    }
+
+  
+
+    export namespace RoleGrantedEvent {
+      export type InputTuple = [role: string, account: AddressLike, grantedBy: AddressLike];
+      export type OutputTuple = [role: string, account: string, grantedBy: string];
+      export interface OutputObject {role: string, account: string, grantedBy: string };
+      export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>
+      export type Filter = TypedDeferredTopicFilter<Event>
+      export type Log = TypedEventLog<Event>
+      export type LogDescription = TypedLogDescription<Event>
+    }
+
+  
+
+    export namespace RoleRevokedEvent {
+      export type InputTuple = [role: string, account: AddressLike, revokedBy: AddressLike];
+      export type OutputTuple = [role: string, account: string, revokedBy: string];
+      export interface OutputObject {role: string, account: string, revokedBy: string };
       export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>
       export type Filter = TypedDeferredTopicFilter<Event>
       export type Log = TypedEventLog<Event>
@@ -169,6 +257,38 @@ decodeFunctionResult(functionFragment: 'voteWithCommitment', data: BytesLike): R
     
 
     
+    admin: TypedContractMethod<
+      [],
+      [string],
+      'view'
+    >
+    
+
+    
+    anchorAuditProof: TypedContractMethod<
+      [_electionId: string, _merkleRoot: BytesLike, _totalBallots: BigNumberish, ],
+      [void],
+      'nonpayable'
+    >
+    
+
+    
+    auditAnchors: TypedContractMethod<
+      [arg0: string, ],
+      [[string, bigint, bigint, string, boolean] & {merkleRoot: string, totalBallots: bigint, timestamp: bigint, auditor: string, anchored: boolean }],
+      'view'
+    >
+    
+
+    
+    auditors: TypedContractMethod<
+      [arg0: AddressLike, ],
+      [boolean],
+      'view'
+    >
+    
+
+    
     candidateCount: TypedContractMethod<
       [],
       [bigint],
@@ -201,9 +321,33 @@ decodeFunctionResult(functionFragment: 'voteWithCommitment', data: BytesLike): R
     
 
     
+    electionEndTime: TypedContractMethod<
+      [],
+      [bigint],
+      'view'
+    >
+    
+
+    
     electionEnded: TypedContractMethod<
       [],
       [boolean],
+      'view'
+    >
+    
+
+    
+    electionOfficers: TypedContractMethod<
+      [arg0: AddressLike, ],
+      [boolean],
+      'view'
+    >
+    
+
+    
+    electionStartTime: TypedContractMethod<
+      [],
+      [bigint],
       'view'
     >
     
@@ -213,6 +357,22 @@ decodeFunctionResult(functionFragment: 'voteWithCommitment', data: BytesLike): R
       [],
       [boolean],
       'view'
+    >
+    
+
+    
+    emergencyPause: TypedContractMethod<
+      [_reason: string, ],
+      [void],
+      'nonpayable'
+    >
+    
+
+    
+    emergencyUnpause: TypedContractMethod<
+      [],
+      [void],
+      'nonpayable'
     >
     
 
@@ -228,6 +388,14 @@ decodeFunctionResult(functionFragment: 'voteWithCommitment', data: BytesLike): R
     getAllCandidates: TypedContractMethod<
       [],
       [Voting.CandidateStructOutput[]],
+      'view'
+    >
+    
+
+    
+    getAuditAnchor: TypedContractMethod<
+      [_electionId: string, ],
+      [[string, bigint, bigint, string, boolean] & {merkleRoot: string, totalBallots: bigint, timestamp: bigint, auditor: string, anchored: boolean }],
       'view'
     >
     
@@ -265,10 +433,42 @@ decodeFunctionResult(functionFragment: 'voteWithCommitment', data: BytesLike): R
     
 
     
+    isNullifierUsed: TypedContractMethod<
+      [_nullifierHash: BytesLike, ],
+      [boolean],
+      'view'
+    >
+    
+
+    
     owner: TypedContractMethod<
       [],
       [string],
       'view'
+    >
+    
+
+    
+    paused: TypedContractMethod<
+      [],
+      [boolean],
+      'view'
+    >
+    
+
+    
+    setAuditor: TypedContractMethod<
+      [_auditor: AddressLike, _status: boolean, ],
+      [void],
+      'nonpayable'
+    >
+    
+
+    
+    setElectionOfficer: TypedContractMethod<
+      [_officer: AddressLike, _status: boolean, ],
+      [void],
+      'nonpayable'
     >
     
 
@@ -304,6 +504,26 @@ decodeFunctionResult(functionFragment: 'voteWithCommitment', data: BytesLike): R
       [void],
       'nonpayable'
     >;
+getFunction(nameOrSignature: 'admin'): TypedContractMethod<
+      [],
+      [string],
+      'view'
+    >;
+getFunction(nameOrSignature: 'anchorAuditProof'): TypedContractMethod<
+      [_electionId: string, _merkleRoot: BytesLike, _totalBallots: BigNumberish, ],
+      [void],
+      'nonpayable'
+    >;
+getFunction(nameOrSignature: 'auditAnchors'): TypedContractMethod<
+      [arg0: string, ],
+      [[string, bigint, bigint, string, boolean] & {merkleRoot: string, totalBallots: bigint, timestamp: bigint, auditor: string, anchored: boolean }],
+      'view'
+    >;
+getFunction(nameOrSignature: 'auditors'): TypedContractMethod<
+      [arg0: AddressLike, ],
+      [boolean],
+      'view'
+    >;
 getFunction(nameOrSignature: 'candidateCount'): TypedContractMethod<
       [],
       [bigint],
@@ -324,15 +544,40 @@ getFunction(nameOrSignature: 'editCandidate'): TypedContractMethod<
       [void],
       'nonpayable'
     >;
+getFunction(nameOrSignature: 'electionEndTime'): TypedContractMethod<
+      [],
+      [bigint],
+      'view'
+    >;
 getFunction(nameOrSignature: 'electionEnded'): TypedContractMethod<
       [],
       [boolean],
+      'view'
+    >;
+getFunction(nameOrSignature: 'electionOfficers'): TypedContractMethod<
+      [arg0: AddressLike, ],
+      [boolean],
+      'view'
+    >;
+getFunction(nameOrSignature: 'electionStartTime'): TypedContractMethod<
+      [],
+      [bigint],
       'view'
     >;
 getFunction(nameOrSignature: 'electionStarted'): TypedContractMethod<
       [],
       [boolean],
       'view'
+    >;
+getFunction(nameOrSignature: 'emergencyPause'): TypedContractMethod<
+      [_reason: string, ],
+      [void],
+      'nonpayable'
+    >;
+getFunction(nameOrSignature: 'emergencyUnpause'): TypedContractMethod<
+      [],
+      [void],
+      'nonpayable'
     >;
 getFunction(nameOrSignature: 'endElection'): TypedContractMethod<
       [],
@@ -342,6 +587,11 @@ getFunction(nameOrSignature: 'endElection'): TypedContractMethod<
 getFunction(nameOrSignature: 'getAllCandidates'): TypedContractMethod<
       [],
       [Voting.CandidateStructOutput[]],
+      'view'
+    >;
+getFunction(nameOrSignature: 'getAuditAnchor'): TypedContractMethod<
+      [_electionId: string, ],
+      [[string, bigint, bigint, string, boolean] & {merkleRoot: string, totalBallots: bigint, timestamp: bigint, auditor: string, anchored: boolean }],
       'view'
     >;
 getFunction(nameOrSignature: 'getCandidate'): TypedContractMethod<
@@ -364,10 +614,30 @@ getFunction(nameOrSignature: 'isNullifierConsumed'): TypedContractMethod<
       [boolean],
       'view'
     >;
+getFunction(nameOrSignature: 'isNullifierUsed'): TypedContractMethod<
+      [_nullifierHash: BytesLike, ],
+      [boolean],
+      'view'
+    >;
 getFunction(nameOrSignature: 'owner'): TypedContractMethod<
       [],
       [string],
       'view'
+    >;
+getFunction(nameOrSignature: 'paused'): TypedContractMethod<
+      [],
+      [boolean],
+      'view'
+    >;
+getFunction(nameOrSignature: 'setAuditor'): TypedContractMethod<
+      [_auditor: AddressLike, _status: boolean, ],
+      [void],
+      'nonpayable'
+    >;
+getFunction(nameOrSignature: 'setElectionOfficer'): TypedContractMethod<
+      [_officer: AddressLike, _status: boolean, ],
+      [void],
+      'nonpayable'
     >;
 getFunction(nameOrSignature: 'startElection'): TypedContractMethod<
       [],
@@ -385,20 +655,29 @@ getFunction(nameOrSignature: 'voteWithCommitment'): TypedContractMethod<
       'nonpayable'
     >;
 
-    getEvent(key: 'BallotCast'): TypedContractEvent<BallotCastEvent.InputTuple, BallotCastEvent.OutputTuple, BallotCastEvent.OutputObject>;
+    getEvent(key: 'AuditRootAnchored'): TypedContractEvent<AuditRootAnchoredEvent.InputTuple, AuditRootAnchoredEvent.OutputTuple, AuditRootAnchoredEvent.OutputObject>;
+getEvent(key: 'BallotCast'): TypedContractEvent<BallotCastEvent.InputTuple, BallotCastEvent.OutputTuple, BallotCastEvent.OutputObject>;
 getEvent(key: 'CandidateAdded'): TypedContractEvent<CandidateAddedEvent.InputTuple, CandidateAddedEvent.OutputTuple, CandidateAddedEvent.OutputObject>;
 getEvent(key: 'CandidateDisabled'): TypedContractEvent<CandidateDisabledEvent.InputTuple, CandidateDisabledEvent.OutputTuple, CandidateDisabledEvent.OutputObject>;
 getEvent(key: 'CandidateUpdated'): TypedContractEvent<CandidateUpdatedEvent.InputTuple, CandidateUpdatedEvent.OutputTuple, CandidateUpdatedEvent.OutputObject>;
 getEvent(key: 'ElectionEnded'): TypedContractEvent<ElectionEndedEvent.InputTuple, ElectionEndedEvent.OutputTuple, ElectionEndedEvent.OutputObject>;
 getEvent(key: 'ElectionStarted'): TypedContractEvent<ElectionStartedEvent.InputTuple, ElectionStartedEvent.OutputTuple, ElectionStartedEvent.OutputObject>;
+getEvent(key: 'EmergencyPaused'): TypedContractEvent<EmergencyPausedEvent.InputTuple, EmergencyPausedEvent.OutputTuple, EmergencyPausedEvent.OutputObject>;
+getEvent(key: 'EmergencyUnpaused'): TypedContractEvent<EmergencyUnpausedEvent.InputTuple, EmergencyUnpausedEvent.OutputTuple, EmergencyUnpausedEvent.OutputObject>;
+getEvent(key: 'RoleGranted'): TypedContractEvent<RoleGrantedEvent.InputTuple, RoleGrantedEvent.OutputTuple, RoleGrantedEvent.OutputObject>;
+getEvent(key: 'RoleRevoked'): TypedContractEvent<RoleRevokedEvent.InputTuple, RoleRevokedEvent.OutputTuple, RoleRevokedEvent.OutputObject>;
 
     filters: {
       
-      'BallotCast(bytes32,uint256,uint256)': TypedContractEvent<BallotCastEvent.InputTuple, BallotCastEvent.OutputTuple, BallotCastEvent.OutputObject>;
+      'AuditRootAnchored(string,bytes32,uint256,address,uint256)': TypedContractEvent<AuditRootAnchoredEvent.InputTuple, AuditRootAnchoredEvent.OutputTuple, AuditRootAnchoredEvent.OutputObject>;
+      AuditRootAnchored: TypedContractEvent<AuditRootAnchoredEvent.InputTuple, AuditRootAnchoredEvent.OutputTuple, AuditRootAnchoredEvent.OutputObject>;
+    
+
+      'BallotCast(bytes32,bytes32,uint256,uint256)': TypedContractEvent<BallotCastEvent.InputTuple, BallotCastEvent.OutputTuple, BallotCastEvent.OutputObject>;
       BallotCast: TypedContractEvent<BallotCastEvent.InputTuple, BallotCastEvent.OutputTuple, BallotCastEvent.OutputObject>;
     
 
-      'CandidateAdded(uint256,string,string)': TypedContractEvent<CandidateAddedEvent.InputTuple, CandidateAddedEvent.OutputTuple, CandidateAddedEvent.OutputObject>;
+      'CandidateAdded(uint256,string,string,string)': TypedContractEvent<CandidateAddedEvent.InputTuple, CandidateAddedEvent.OutputTuple, CandidateAddedEvent.OutputObject>;
       CandidateAdded: TypedContractEvent<CandidateAddedEvent.InputTuple, CandidateAddedEvent.OutputTuple, CandidateAddedEvent.OutputObject>;
     
 
@@ -410,12 +689,28 @@ getEvent(key: 'ElectionStarted'): TypedContractEvent<ElectionStartedEvent.InputT
       CandidateUpdated: TypedContractEvent<CandidateUpdatedEvent.InputTuple, CandidateUpdatedEvent.OutputTuple, CandidateUpdatedEvent.OutputObject>;
     
 
-      'ElectionEnded(uint256)': TypedContractEvent<ElectionEndedEvent.InputTuple, ElectionEndedEvent.OutputTuple, ElectionEndedEvent.OutputObject>;
+      'ElectionEnded(uint256,address)': TypedContractEvent<ElectionEndedEvent.InputTuple, ElectionEndedEvent.OutputTuple, ElectionEndedEvent.OutputObject>;
       ElectionEnded: TypedContractEvent<ElectionEndedEvent.InputTuple, ElectionEndedEvent.OutputTuple, ElectionEndedEvent.OutputObject>;
     
 
-      'ElectionStarted(uint256)': TypedContractEvent<ElectionStartedEvent.InputTuple, ElectionStartedEvent.OutputTuple, ElectionStartedEvent.OutputObject>;
+      'ElectionStarted(uint256,address)': TypedContractEvent<ElectionStartedEvent.InputTuple, ElectionStartedEvent.OutputTuple, ElectionStartedEvent.OutputObject>;
       ElectionStarted: TypedContractEvent<ElectionStartedEvent.InputTuple, ElectionStartedEvent.OutputTuple, ElectionStartedEvent.OutputObject>;
+    
+
+      'EmergencyPaused(address,uint256,string)': TypedContractEvent<EmergencyPausedEvent.InputTuple, EmergencyPausedEvent.OutputTuple, EmergencyPausedEvent.OutputObject>;
+      EmergencyPaused: TypedContractEvent<EmergencyPausedEvent.InputTuple, EmergencyPausedEvent.OutputTuple, EmergencyPausedEvent.OutputObject>;
+    
+
+      'EmergencyUnpaused(address,uint256)': TypedContractEvent<EmergencyUnpausedEvent.InputTuple, EmergencyUnpausedEvent.OutputTuple, EmergencyUnpausedEvent.OutputObject>;
+      EmergencyUnpaused: TypedContractEvent<EmergencyUnpausedEvent.InputTuple, EmergencyUnpausedEvent.OutputTuple, EmergencyUnpausedEvent.OutputObject>;
+    
+
+      'RoleGranted(string,address,address)': TypedContractEvent<RoleGrantedEvent.InputTuple, RoleGrantedEvent.OutputTuple, RoleGrantedEvent.OutputObject>;
+      RoleGranted: TypedContractEvent<RoleGrantedEvent.InputTuple, RoleGrantedEvent.OutputTuple, RoleGrantedEvent.OutputObject>;
+    
+
+      'RoleRevoked(string,address,address)': TypedContractEvent<RoleRevokedEvent.InputTuple, RoleRevokedEvent.OutputTuple, RoleRevokedEvent.OutputObject>;
+      RoleRevoked: TypedContractEvent<RoleRevokedEvent.InputTuple, RoleRevokedEvent.OutputTuple, RoleRevokedEvent.OutputObject>;
     
     };
   }

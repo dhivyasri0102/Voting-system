@@ -64,8 +64,8 @@ export const LandingPage: React.FC = () => {
       bg: 'bg-green-50 border-green-200',
       title: isTamil ? 'மாற்ற முடியாத பதிவு' : 'Immutable Ledger',
       desc: isTamil
-        ? 'ஒவ்வொரு வாக்கும் SHA-256 ஹாஷிங் மூலம் மெர்கில் மரத்தில் பாதுகாக்கப்படுகிறது.'
-        : 'Every vote is cryptographically anchored via Merkle Trees on Hyperledger Fabric nodes.',
+        ? 'ஒவ்வொரு வாக்கும் Solidity ஸ்மார்ட் ஒப்பந்தம் மற்றும் மெர்கில் மரத்தில் பாதுகாக்கப்படுகிறது.'
+        : 'Every vote is cryptographically anchored via Merkle Trees on Solidity EVM smart contracts.',
     },
     {
       icon: Lock,
@@ -369,10 +369,10 @@ export const LandingPage: React.FC = () => {
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
             {[
-              { label: 'Hyperledger Fabric', sub: 'v2.5 Permissioned' },
-              { label: 'Solidity EVM', sub: 'Smart Contract Layer' },
-              { label: 'SMS OTP', sub: 'Twilio / Fast2SMS' },
-              { label: 'AES-256 + SHA-3', sub: 'Cryptographic Core' },
+              { label: 'Solidity Smart Contract', sub: 'EVM ^0.8.34 Osaka' },
+              { label: 'Cyber Defense', sub: 'Pausable & RBAC Shield' },
+              { label: 'SMS OTP Gateway', sub: 'Twilio / Fast2SMS' },
+              { label: 'Keccak-256 + ZK', sub: 'Nullifier Privacy Core' },
             ].map((tech, i) => (
               <div key={i} className="p-3 bg-stone-50 rounded-xl border border-stone-100 text-center">
                 <p className="font-bold text-stone-800">{tech.label}</p>
@@ -404,7 +404,7 @@ export const LandingPage: React.FC = () => {
           <div className="flex items-center space-x-4 text-stone-400">
             <span>ISO/IEC 27001 Certified</span>
             <span>•</span>
-            <span>Hyperledger Fabric v2.5</span>
+            <span>Solidity Smart Contract</span>
             <span>•</span>
             <span>SMS OTP Verified</span>
           </div>

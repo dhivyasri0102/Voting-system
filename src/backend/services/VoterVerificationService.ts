@@ -138,6 +138,16 @@ export class VoterVerificationService {
     message: string;
   }> {
     const cleanId = (voterId || '').trim().toUpperCase();
+
+    // Cyber Security: Account Lockout Defense against Brute Force
+    const lockout = SecurityMonitoringService.isLockedOut(cleanId);
+    if (lockout.isLocked) {
+      return {
+        success: false,
+        message: `Security Lockout active for this voter identifier. Please retry after ${lockout.remainingSeconds} seconds.`,
+      };
+    }
+
     const voter = DataStoreService.getVoter(cleanId);
 
     if (!voter) {
@@ -252,8 +262,11 @@ export class VoterVerificationService {
     }
 
     session.attempts++;
-    if (session.otp !== enteredOtp.trim()) {
+    const isOtpValid = SecurityMonitoringService.timingSafeCompare(session.otp, enteredOtp.trim());
+    if (!isOtpValid) {
       this.stats.otpVerifications.failed++;
+      SecurityMonitoringService.recordFailedAuthAttempt(session.voterId);
+
       const remaining = 3 - session.attempts;
       if (remaining <= 0) {
         session.blocked = true;
@@ -270,6 +283,8 @@ export class VoterVerificationService {
       };
     }
 
+    // Success - clear failed authentication attempts
+    SecurityMonitoringService.clearFailedAuthAttempts(session.voterId);
     session.verified = true;
     this.stats.otpVerifications.successful++;
 

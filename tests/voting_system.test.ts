@@ -23,7 +23,7 @@ import { BlockchainLedgerService } from '../src/backend/services/BlockchainLedge
 import { ElectionLifecycleService } from '../src/backend/services/ElectionLifecycleService.js';
 import { TallyService } from '../src/backend/services/TallyService.js';
 import { AuditService } from '../src/backend/services/AuditService.js';
-import { FabricNetworkManager } from '../src/backend/services/FabricNetworkManager.js';
+import { SolidityBlockchainManager } from '../src/backend/services/SolidityBlockchainManager.js';
 import { getJwtSecret, getAdminMfaSecret } from '../src/backend/config/secrets.js';
 
 async function runTests() {
@@ -48,13 +48,13 @@ async function runTests() {
   assert(Boolean(jwtSecret && jwtSecret.length >= 32), 'JWT_SECRET auto-generated with cryptographically secure random value');
   assert(Boolean(mfaSecret && mfaSecret.length >= 16), 'ADMIN_MFA_SECRET auto-generated with cryptographically secure random value');
 
-  // 2. Fabric CA & Network Configuration Test
-  console.log('\n--- TEST GROUP 2: HYPERLEDGER FABRIC LOCAL NETWORK ---');
-  const fabricInfo = FabricNetworkManager.getInstance().getNetworkInfo();
-  assert(fabricInfo.isConfigured === true, 'Fabric local development network configured');
-  assert(Boolean(process.env.FABRIC_CHANNEL), 'FABRIC_CHANNEL environment variable populated');
-  assert(Boolean(process.env.FABRIC_CERT_PATH), 'FABRIC_CERT_PATH environment variable populated');
-  assert(Boolean(process.env.FABRIC_KEY_PATH), 'FABRIC_KEY_PATH environment variable populated');
+  // 2. Solidity Smart Contract & EVM Architecture Verification
+  console.log('\n--- TEST GROUP 2: SOLIDITY SMART CONTRACT & EVM ARCHITECTURE ---');
+  const solidityInfo = SolidityBlockchainManager.getInstance().getStatus();
+  assert(solidityInfo.isConfigured === true, 'Solidity EVM smart contract manager configured');
+  assert(solidityInfo.smartContractVersion.includes('Voting.sol'), 'Solidity Voting.sol contract identified');
+  assert(solidityInfo.features.includes('Emergency Circuit Breaker (Pausable)'), 'Circuit breaker cyber security feature active');
+  assert(solidityInfo.features.includes('Zero-Knowledge Nullifier Anti-Replay'), 'Anti-replay nullifier cyber defense active');
 
   // 3. Electoral Roll Test (UNCONFIGURED by default)
   console.log('\n--- TEST GROUP 3: ELECTORAL ROLL INTEGRATION & DEFAULT UNCONFIGURED ---');
@@ -110,7 +110,31 @@ async function runTests() {
 
   // 5. Anonymous Credential Issuance
   console.log('\n--- TEST GROUP 5: ANONYMOUS CREDENTIAL CRYPTOGRAPHIC ENGINE ---');
-  const electionId = 'ELEC-2026-CHENN-01';
+  const createElecResult = ElectionLifecycleService.createElection({
+    title: 'Automated Test Election 2026',
+    type: 'PARLIAMENTARY',
+    constituency: 'Central Chennai (Constituency No. 04)',
+    state: 'Tamil Nadu',
+    startTime: new Date(Date.now() - 3600000).toISOString(),
+    endTime: new Date(Date.now() + 86400000).toISOString(),
+  });
+  const electionId = createElecResult.election!.id;
+  const cand1 = ElectionLifecycleService.addCandidate(electionId, {
+    name: 'Candidate One',
+    party: 'National Democratic Alliance',
+    candidateType: 'Party',
+    constituency: 'Central Chennai (Constituency No. 04)',
+    symbol: 'Sun',
+  });
+  const cand2 = ElectionLifecycleService.addCandidate(electionId, {
+    name: 'Candidate Two',
+    party: 'United Progressive Alliance',
+    candidateType: 'Party',
+    constituency: 'Central Chennai (Constituency No. 04)',
+    symbol: 'Rising Star',
+  });
+  ElectionLifecycleService.transitionElectionStatus(electionId, 'OPEN', true);
+
   const { rawCredential, credentialHash } = AnonymousCredentialService.issueCredential(electionId);
   assert(Boolean(rawCredential && credentialHash), 'One-time anonymous credential issued');
   assert(rawCredential.startsWith('VOTE-TOKEN-'), 'Raw credential has unpredictable token prefix');
@@ -121,7 +145,7 @@ async function runTests() {
   // 6. Ballot Submission to Blockchain
   console.log('\n--- TEST GROUP 6: BALLOT SERVICE & BLOCKCHAIN LEDGER ---');
   const initialBlocks = BlockchainLedgerService.getBlocks().length;
-  const candidateId = 'CAND-01';
+  const candidateId = cand1.candidate!.id;
 
   const ballotResult = await BallotService.castBallot({
     electionId,
@@ -137,7 +161,7 @@ async function runTests() {
   console.log('\n--- TEST GROUP 7: ATOMIC SINGLE-USE TOKEN CONCURRENCY DEFENSE ---');
   const doubleVoteResult = await BallotService.castBallot({
     electionId,
-    candidateId: 'CAND-02',
+    candidateId: cand2.candidate!.id,
     credentialHash, // Attempting to reuse identical token
     voterSecretNonce: 'second_attempt_nonce',
   });

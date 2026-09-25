@@ -90,7 +90,7 @@ export const Header: React.FC<HeaderProps> = ({
                   GOV.IN • ECI
                 </span>
                 <span className="text-xs text-slate-400">
-                  Secured by Hyperledger Fabric & SMS OTP authentication
+                  Secured by Solidity EVM Smart Contract & SMS OTP authentication
                 </span>
               </div>
               <h1 className="text-lg sm:text-xl font-bold tracking-tight text-white mt-0.5">

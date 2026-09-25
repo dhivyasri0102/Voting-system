@@ -208,7 +208,7 @@ export const AdminResultsDashboard: React.FC = () => {
             <span>Blockchain Ledger Integrity</span>
           </h3>
           <p className="text-slate-500 text-[11px]">
-            Every block verified against its predecessor hash on the Hyperledger Fabric channel.
+            Every block verified against its predecessor hash and anchored to the Solidity EVM smart contract.
           </p>
           <div className="p-3 bg-slate-50 rounded-xl space-y-1 font-mono text-[11px] text-slate-700">
             <div>Blocks Verified: {results?.blockchainVerification?.totalBlocks || 0}</div>

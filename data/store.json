@@ -1,5 +1,33 @@
 {
-  "voters": [],
+  "voters": [
+    {
+      "voterId": "TNL1224688",
+      "fullName": "Ramanathan Meenakshi",
+      "mobileNumber": "9840123456",
+      "constituency": "Central Chennai (Constituency No. 04)",
+      "state": "Tamil Nadu",
+      "status": "ACTIVE",
+      "registeredAt": "2026-09-25T06:07:12.486Z"
+    },
+    {
+      "voterId": "TNL9807499",
+      "fullName": "Ramanathan Meenakshi",
+      "mobileNumber": "9840123456",
+      "constituency": "Central Chennai (Constituency No. 04)",
+      "state": "Tamil Nadu",
+      "status": "ACTIVE",
+      "registeredAt": "2026-09-25T06:16:55.088Z"
+    },
+    {
+      "voterId": "TNL4846060",
+      "fullName": "Ramanathan Meenakshi",
+      "mobileNumber": "9840123456",
+      "constituency": "Central Chennai (Constituency No. 04)",
+      "state": "Tamil Nadu",
+      "status": "ACTIVE",
+      "registeredAt": "2026-09-25T08:26:25.728Z"
+    }
+  ],
   "elections": [
     {
       "id": "ELEC-MUE9WEGE-3291",
@@ -8,7 +36,7 @@
       "constituency": "Thousand Lights (Constituency No. 20)",
       "state": "Tamil Nadu",
       "type": "ASSEMBLY",
-      "status": "OPEN",
+      "status": "CLOSED",
       "startTime": "2026-09-24T01:30:00.000Z",
       "endTime": "2026-09-26T12:30:00.000Z",
       "rules": {
@@ -23,7 +51,55 @@
       ],
       "totalEligibleVoters": 245000,
       "createdAt": "2026-09-23T15:43:54.926Z",
-      "updatedAt": "2026-09-23T15:45:10.117Z"
+      "updatedAt": "2026-09-25T09:29:41.575Z"
+    },
+    {
+      "id": "ELEC-MUGKIY05-2C16",
+      "title": "Automated Test Election 2026",
+      "description": "",
+      "constituency": "Central Chennai (Constituency No. 04)",
+      "state": "Tamil Nadu",
+      "type": "PARLIAMENTARY",
+      "status": "RESULT_PUBLISHED",
+      "startTime": "2026-09-25T05:16:55.204Z",
+      "endTime": "2026-09-26T06:16:55.204Z",
+      "rules": {
+        "maxSelections": 1,
+        "allowNOTA": true,
+        "requireMFAForAuthority": true,
+        "seniorAccessibilityEnabled": true
+      },
+      "languages": [
+        "en",
+        "ta"
+      ],
+      "totalEligibleVoters": 1000000,
+      "createdAt": "2026-09-25T06:16:55.205Z",
+      "updatedAt": "2026-09-25T06:16:55.229Z"
+    },
+    {
+      "id": "ELEC-MUGP5HT8-FC17",
+      "title": "Automated Test Election 2026",
+      "description": "",
+      "constituency": "Central Chennai (Constituency No. 04)",
+      "state": "Tamil Nadu",
+      "type": "PARLIAMENTARY",
+      "status": "RESULT_PUBLISHED",
+      "startTime": "2026-09-25T07:26:25.771Z",
+      "endTime": "2026-09-26T08:26:25.771Z",
+      "rules": {
+        "maxSelections": 1,
+        "allowNOTA": true,
+        "requireMFAForAuthority": true,
+        "seniorAccessibilityEnabled": true
+      },
+      "languages": [
+        "en",
+        "ta"
+      ],
+      "totalEligibleVoters": 1000000,
+      "createdAt": "2026-09-25T08:26:25.772Z",
+      "updatedAt": "2026-09-25T08:26:25.798Z"
     }
   ],
   "candidates": {
@@ -43,11 +119,136 @@
         "status": "ACTIVE",
         "orderNumber": 1,
         "createdAt": "2026-09-23T15:44:45.043Z",
-        "updatedAt": "2026-09-23T15:44:45.043Z"
+        "updatedAt": "2026-09-25T09:34:07.111Z"
+      }
+    ],
+    "ELEC-MUGKIY05-2C16": [
+      {
+        "id": "CAND-01",
+        "electionId": "ELEC-MUGKIY05-2C16",
+        "name": "Candidate One",
+        "party": "National Democratic Alliance",
+        "candidateType": "Party",
+        "constituency": "Central Chennai (Constituency No. 04)",
+        "symbol": "Sun",
+        "photo": "",
+        "logo": "",
+        "description": "",
+        "information": "",
+        "status": "ACTIVE",
+        "orderNumber": 1,
+        "createdAt": "2026-09-25T06:16:55.208Z",
+        "updatedAt": "2026-09-25T06:16:55.208Z"
+      },
+      {
+        "id": "CAND-02",
+        "electionId": "ELEC-MUGKIY05-2C16",
+        "name": "Candidate Two",
+        "party": "United Progressive Alliance",
+        "candidateType": "Party",
+        "constituency": "Central Chennai (Constituency No. 04)",
+        "symbol": "Rising Star",
+        "photo": "",
+        "logo": "",
+        "description": "",
+        "information": "",
+        "status": "ACTIVE",
+        "orderNumber": 2,
+        "createdAt": "2026-09-25T06:16:55.211Z",
+        "updatedAt": "2026-09-25T06:16:55.211Z"
+      }
+    ],
+    "ELEC-MUGP5HT8-FC17": [
+      {
+        "id": "CAND-01",
+        "electionId": "ELEC-MUGP5HT8-FC17",
+        "name": "Candidate One",
+        "party": "National Democratic Alliance",
+        "candidateType": "Party",
+        "constituency": "Central Chennai (Constituency No. 04)",
+        "symbol": "Sun",
+        "photo": "",
+        "logo": "",
+        "description": "",
+        "information": "",
+        "status": "ACTIVE",
+        "orderNumber": 1,
+        "createdAt": "2026-09-25T08:26:25.778Z",
+        "updatedAt": "2026-09-25T08:26:25.778Z"
+      },
+      {
+        "id": "CAND-02",
+        "electionId": "ELEC-MUGP5HT8-FC17",
+        "name": "Candidate Two",
+        "party": "United Progressive Alliance",
+        "candidateType": "Party",
+        "constituency": "Central Chennai (Constituency No. 04)",
+        "symbol": "Rising Star",
+        "photo": "",
+        "logo": "",
+        "description": "",
+        "information": "",
+        "status": "ACTIVE",
+        "orderNumber": 2,
+        "createdAt": "2026-09-25T08:26:25.780Z",
+        "updatedAt": "2026-09-25T08:26:25.780Z"
       }
     ]
   },
-  "credentials": {},
+  "credentials": {
+    "788bc31f2d6cbd5d766057f1f5b52fb764b1f87191c725607573aa532ca8a4d5": {
+      "id": "CRED-a734ac9a27aeb43a",
+      "credentialHash": "788bc31f2d6cbd5d766057f1f5b52fb764b1f87191c725607573aa532ca8a4d5",
+      "electionId": "ELEC-2026-CHENN-01",
+      "status": "ISSUED",
+      "issuedAt": "2026-09-25T06:07:12.549Z",
+      "expiresAt": "2026-09-25T07:07:12.549Z"
+    },
+    "cd72e10c6bf3636f5aee194145d5d5a4298683e90ae9145af9b7a4bfaa2b266c": {
+      "id": "CRED-d8761b0eae87a796",
+      "credentialHash": "cd72e10c6bf3636f5aee194145d5d5a4298683e90ae9145af9b7a4bfaa2b266c",
+      "electionId": "ELEC-2026-CHENN-01",
+      "status": "ISSUED",
+      "issuedAt": "2026-09-25T06:07:12.553Z",
+      "expiresAt": "2026-09-25T07:07:12.553Z"
+    },
+    "9d9c348dd7b536f3de3e14114d36e8a6495bd7bc8202590485135c11019df899": {
+      "id": "CRED-331fea7167c4a55f",
+      "credentialHash": "9d9c348dd7b536f3de3e14114d36e8a6495bd7bc8202590485135c11019df899",
+      "electionId": "ELEC-MUGKIY05-2C16",
+      "status": "USED",
+      "issuedAt": "2026-09-25T06:16:55.216Z",
+      "expiresAt": "2026-09-25T07:16:55.216Z",
+      "usedAt": "2026-09-25T06:16:55.218Z",
+      "transactionReference": "TX-VOTE-6956088A45515561"
+    },
+    "d2133b0ee469b486ca6aca10432b47ef2e4cda303ec7d62b64b23b81967c7c4b": {
+      "id": "CRED-3908821a85edcc60",
+      "credentialHash": "d2133b0ee469b486ca6aca10432b47ef2e4cda303ec7d62b64b23b81967c7c4b",
+      "electionId": "ELEC-MUGKIY05-2C16",
+      "status": "ISSUED",
+      "issuedAt": "2026-09-25T06:16:55.223Z",
+      "expiresAt": "2026-09-25T07:16:55.223Z"
+    },
+    "92c6d772b8d2a6cbddfc5d23d2c5192bc259d9fecdca56b5fd275e4a5d7f24e3": {
+      "id": "CRED-419341814ff8a0a7",
+      "credentialHash": "92c6d772b8d2a6cbddfc5d23d2c5192bc259d9fecdca56b5fd275e4a5d7f24e3",
+      "electionId": "ELEC-MUGP5HT8-FC17",
+      "status": "USED",
+      "issuedAt": "2026-09-25T08:26:25.785Z",
+      "expiresAt": "2026-09-25T09:26:25.785Z",
+      "usedAt": "2026-09-25T08:26:25.788Z",
+      "transactionReference": "TX-VOTE-40F122EE9A6C515B"
+    },
+    "4a56ba1e725dc150728c1a35c35c0cab9276b2cb9a0702ba892b963bd9c494ae": {
+      "id": "CRED-17b306f61f6d16d2",
+      "credentialHash": "4a56ba1e725dc150728c1a35c35c0cab9276b2cb9a0702ba892b963bd9c494ae",
+      "electionId": "ELEC-MUGP5HT8-FC17",
+      "status": "ISSUED",
+      "issuedAt": "2026-09-25T08:26:25.794Z",
+      "expiresAt": "2026-09-25T09:26:25.794Z"
+    }
+  },
   "blocks": [],
   "electoralRollVoted": []
 }

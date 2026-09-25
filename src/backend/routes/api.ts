@@ -22,6 +22,7 @@ import { AuditService } from '../services/AuditService.js';
 import { SecurityMonitoringService } from '../services/SecurityMonitoringService.js';
 import { AuthService } from '../services/AuthService.js';
 import { DataStoreService } from '../services/DataStoreService.js';
+import { SolidityBlockchainManager } from '../services/SolidityBlockchainManager.js';
 
 const router = Router();
 

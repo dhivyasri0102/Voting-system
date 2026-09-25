@@ -127,16 +127,16 @@ export const AdminSystemHealth: React.FC = () => {
           <p className="text-xs text-slate-500">In-memory distributed lock & atomic token consumption.</p>
         </div>
 
-        {/* Hyperledger Fabric */}
+        {/* Solidity EVM Smart Contract */}
         <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-2">
           <div className="flex items-center justify-between">
             <span className="font-bold text-slate-800 text-sm flex items-center space-x-2">
               <ShieldCheck className="w-4 h-4 text-emerald-600" />
-              <span>Hyperledger Fabric</span>
+              <span>Solidity EVM Smart Contract</span>
             </span>
             {getStatusBadge(healthData?.components?.blockchain || 'HEALTHY')}
           </div>
-          <p className="text-xs text-slate-500">Consensus nodes maintaining the tamper-proof ledger.</p>
+          <p className="text-xs text-slate-500">Decentralized EVM nodes maintaining tamper-proof Voting.sol contract.</p>
         </div>
 
         {/* SMS Gateway */}
