@@ -2,6 +2,8 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext.js';
 import { LandingPage } from './components/LandingPage.js';
+import { SeniorModeAssistant } from './components/SeniorModeAssistant.js';
+import { VoiceGuidanceProvider, VoiceGuidanceBar } from './components/VoiceGuidance.js';
 
 // Admin Portal Components
 import { AdminLogin } from './components/admin/AdminLogin.js';
@@ -26,7 +28,10 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Routes>
+        <VoiceGuidanceProvider>
+          <SeniorModeAssistant />
+          <VoiceGuidanceBar />
+          <Routes>
           {/* 1. Landing Page */}
           <Route path="/" element={<LandingPage />} />
 
@@ -66,6 +71,7 @@ export default function App() {
           {/* Catch-all fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </VoiceGuidanceProvider>
       </AuthProvider>
     </BrowserRouter>
   );

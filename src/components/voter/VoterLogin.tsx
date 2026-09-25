@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   Vote,
@@ -14,15 +14,65 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.js';
+import { useVoiceGuidance, VotingStep } from '../VoiceGuidance.js';
+
+// Map VoterLogin flowStage → VotingStep for voice guidance
+const STAGE_TO_VOICE: Record<string, VotingStep> = {
+  VOTER_ID: 'VOTER_ID',
+  AADHAAR_ENTRY: 'AADHAAR',
+  OTP_ENTRY: 'OTP',
+  AUTH_SUCCESS: 'CREDENTIAL',
+};
 
 type FlowStage = 'VOTER_ID' | 'PHONE_ENTRY' | 'OTP_ENTRY' | 'AUTH_SUCCESS';
 
 export const VoterLogin: React.FC = () => {
   const navigate = useNavigate();
   const { loginVoter, accessibility, toggleLanguage } = useAuth();
+  const vg = useVoiceGuidance();
 
   const isTamil = accessibility.language === 'ta';
 
+  const [flowStage, setFlowStage] = useState<
+    'VOTER_ID' | 'AADHAAR_ENTRY' | 'OTP_ENTRY' | 'AUTH_SUCCESS'
+  >('VOTER_ID');
+
+  // ── Speak guidance whenever the flow stage changes ──────────────────────────
+  useEffect(() => {
+    const step = STAGE_TO_VOICE[flowStage];
+    if (step) {
+      const t = setTimeout(() => vg.speak(step), 600);
+      return () => clearTimeout(t);
+    }
+  }, [flowStage, vg.voiceOn, vg.lang]);
+
+  // ── Register voice commands ──────────────────────────────────────────────────
+  useEffect(() => {
+    vg.registerCommandHandler((cmd) => {
+      if (cmd.includes('repeat') || cmd.includes('again')) { vg.repeat(); return; }
+      if (cmd.includes('next') || cmd.includes('proceed')) {
+        // The flow advances via the real buttons — we just remind
+        vg.speakCustom('Please fill in the form and press the button to proceed.');
+      }
+    });
+    return () => vg.unregisterCommandHandler();
+  }, [vg]);
+
+
+  const [voterIdInput, setVoterIdInput] =
+    useState<string>('TNL1029384');
+
+  const [aadhaarInput, setAadhaarInput] =
+    useState<string>('5432 9876 1238');
+
+  const [consentGiven, setConsentGiven] =
+    useState<boolean>(true);
+
+  const [otpInput, setOtpInput] =
+    useState<string>('123456');
+
+  const [otpTxId, setOtpTxId] =
+    useState<string | null>(null);
   const [flowStage, setFlowStage] = useState<FlowStage>('VOTER_ID');
 
   const [voterIdInput, setVoterIdInput] = useState<string>('');
