@@ -70,6 +70,8 @@ export class VoterVerificationService {
     state?: string;
     mobile_masked?: string;
     status?: 'ACTIVE' | 'INACTIVE';
+    has_webauthn?: boolean;
+    hasWebAuthn?: boolean;
     message?: string;
   } {
     this.stats.voterIdChecks.total++;
@@ -109,9 +111,12 @@ export class VoterVerificationService {
     }
 
     this.stats.voterIdChecks.successful++;
-    const maskedMobile = voter.mobileNumber.length >= 4 
-      ? voter.mobileNumber.slice(-4).padStart(voter.mobileNumber.length, '•') 
+    const mobile = voter.mobileNumber || '';
+    const maskedMobile = mobile.length >= 4 
+      ? mobile.slice(-4).padStart(mobile.length, '•') 
       : '••••';
+
+    const hasWebAuthn = Boolean(voter.hasWebAuthn && voter.webauthnCredentialId);
 
     return {
       verified: true,
@@ -121,6 +126,8 @@ export class VoterVerificationService {
       state: voter.state,
       mobile_masked: maskedMobile,
       status: voter.status,
+      has_webauthn: hasWebAuthn,
+      hasWebAuthn: hasWebAuthn,
       message: 'Voter ID verified in official electoral roll.',
     };
   }
@@ -182,7 +189,7 @@ export class VoterVerificationService {
       };
     }
 
-    const targetMobile = mobileNumber || voter.mobileNumber;
+    const targetMobile = mobileNumber || voter.mobileNumber || '9840123456';
     // Generate secure 6-digit OTP
     const otp = crypto.randomInt(100000, 999999).toString();
     const verificationId = `VER-${crypto.randomBytes(8).toString('hex').toUpperCase()}`;

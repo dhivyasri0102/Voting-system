@@ -2,7 +2,7 @@
   "voters": [
     {
       "voterId": "TNL1224688",
-      "fullName": "Ramanathan Meenakshi",
+      "fullName": "Meenakshi Ramanathan",
       "mobileNumber": "9840123456",
       "constituency": "Central Chennai (Constituency No. 04)",
       "state": "Tamil Nadu",
@@ -11,21 +11,107 @@
     },
     {
       "voterId": "TNL9807499",
-      "fullName": "Ramanathan Meenakshi",
-      "mobileNumber": "9840123456",
+      "fullName": "Arun Kumar",
+      "mobileNumber": "8978349849",
       "constituency": "Central Chennai (Constituency No. 04)",
       "state": "Tamil Nadu",
       "status": "ACTIVE",
-      "registeredAt": "2026-09-25T06:16:55.088Z"
+      "registeredAt": "2026-09-25T06:16:55.088Z",
+      "hasWebAuthn": true,
+      "webauthnCredentialId": "4ueLpii9YqIu8NSi3xtJrwgUJpyzeJD21cOjzsggm_U",
+      "webauthnPublicKey": "o2NmbXRkbm9uZWdhdHRTdG10oGhhdXRoRGF0YVikSZYN5YgOjGh0NBcPZHZgW4_krrmihjLHmVzzuoMdl2NFAAAAAAiYcFjK3EuBtuEw3lDcvpYAIOLni6YovWKiLvDUot8bSa8IFCacs3iQ9tXDo87IIJv1pQECAyYgASFYIKv7zGAt11EUuh8MAvNkJkSv_2BHvQ6eEjSPIYRmZt8sIlggMGvPxOj_6PopJiZG-x9_ubFKkP93mlDbQaqGiZJhARU",
+      "webauthnSignCount": 0,
+      "webauthnRegisteredAt": "2026-09-26T03:22:03.693Z"
     },
     {
       "voterId": "TNL4846060",
-      "fullName": "Ramanathan Meenakshi",
-      "mobileNumber": "9840123456",
+      "fullName": "Kavitha Sundaram",
+      "mobileNumber": "9849086988",
       "constituency": "Central Chennai (Constituency No. 04)",
       "state": "Tamil Nadu",
       "status": "ACTIVE",
       "registeredAt": "2026-09-25T08:26:25.728Z"
+    },
+    {
+      "voterId": "TNL1029384",
+      "fullName": "Vijayalakshmi Narayanan",
+      "mobileNumber": "9841234567",
+      "constituency": "Central Chennai (Constituency No. 04)",
+      "state": "Tamil Nadu",
+      "status": "ACTIVE",
+      "registeredAt": "2026-09-25T09:00:00.000Z"
+    },
+    {
+      "voterId": "TNL2048591",
+      "fullName": "Karthik Rajendran",
+      "mobileNumber": "9842345678",
+      "constituency": "Thousand Lights (Constituency No. 20)",
+      "state": "Tamil Nadu",
+      "status": "ACTIVE",
+      "registeredAt": "2026-09-25T09:05:00.000Z"
+    },
+    {
+      "voterId": "TNL3948201",
+      "fullName": "Deepa Subramanian",
+      "mobileNumber": "9843456789",
+      "constituency": "Thousand Lights (Constituency No. 20)",
+      "state": "Tamil Nadu",
+      "status": "ACTIVE",
+      "registeredAt": "2026-09-25T09:10:00.000Z"
+    },
+    {
+      "voterId": "TNL4829103",
+      "fullName": "Mohammed Farooq",
+      "mobileNumber": "9844567890",
+      "constituency": "Central Chennai (Constituency No. 04)",
+      "state": "Tamil Nadu",
+      "status": "ACTIVE",
+      "registeredAt": "2026-09-25T09:15:00.000Z"
+    },
+    {
+      "voterId": "TNL5930284",
+      "fullName": "Ananya Venkatesh",
+      "mobileNumber": "9845678901",
+      "constituency": "Thousand Lights (Constituency No. 20)",
+      "state": "Tamil Nadu",
+      "status": "ACTIVE",
+      "registeredAt": "2026-09-25T09:20:00.000Z"
+    },
+    {
+      "voterId": "TNL6829401",
+      "fullName": "Suresh Balakrishnan",
+      "mobileNumber": "9846789012",
+      "constituency": "Central Chennai (Constituency No. 04)",
+      "state": "Tamil Nadu",
+      "status": "ACTIVE",
+      "registeredAt": "2026-09-25T09:25:00.000Z"
+    },
+    {
+      "voterId": "TNL7192834",
+      "fullName": "Priya Dharshini",
+      "mobileNumber": "9847890123",
+      "constituency": "Thousand Lights (Constituency No. 20)",
+      "state": "Tamil Nadu",
+      "status": "ACTIVE",
+      "registeredAt": "2026-09-25T09:30:00.000Z"
+    },
+    {
+      "voterId": "TNL8304912",
+      "fullName": "Selvam Murugan",
+      "mobileNumber": "9848901234",
+      "constituency": "Central Chennai (Constituency No. 04)",
+      "state": "Tamil Nadu",
+      "status": "ACTIVE",
+      "registeredAt": "2026-09-25T09:35:00.000Z"
+    },
+    {
+      "voterId": "TNL9203841",
+      "fullName": "Rajesh Kanna",
+      "mobileNumber": "9849012345",
+      "constituency": "Thousand Lights (Constituency No. 20)",
+      "state": "Tamil Nadu",
+      "status": "ACTIVE",
+      "registeredAt": "2026-09-25T09:40:00.000Z"
     }
   ],
   "elections": [
@@ -36,7 +122,7 @@
       "constituency": "Thousand Lights (Constituency No. 20)",
       "state": "Tamil Nadu",
       "type": "ASSEMBLY",
-      "status": "CLOSED",
+      "status": "OPEN",
       "startTime": "2026-09-24T01:30:00.000Z",
       "endTime": "2026-09-26T12:30:00.000Z",
       "rules": {
@@ -247,8 +333,34 @@
       "status": "ISSUED",
       "issuedAt": "2026-09-25T08:26:25.794Z",
       "expiresAt": "2026-09-25T09:26:25.794Z"
+    },
+    "2b08b6e399b44c717e9bee7acdcbc2e30209962e5ebc342f60eabd3a5585852d": {
+      "id": "CRED-1aabc88bf10a86f5",
+      "credentialHash": "2b08b6e399b44c717e9bee7acdcbc2e30209962e5ebc342f60eabd3a5585852d",
+      "electionId": "ELEC-MUE9WEGE-3291",
+      "status": "ISSUED",
+      "issuedAt": "2026-09-26T03:19:45.971Z",
+      "expiresAt": "2026-09-26T04:19:45.971Z"
+    },
+    "76020210977ed3a85eb432bac4946acfdd986dc1d3ae61b1b0914e4ae74ca5b1": {
+      "id": "CRED-7bdcf41d33a1f607",
+      "credentialHash": "76020210977ed3a85eb432bac4946acfdd986dc1d3ae61b1b0914e4ae74ca5b1",
+      "electionId": "ELEC-MUE9WEGE-3291",
+      "status": "ISSUED",
+      "issuedAt": "2026-09-26T03:22:21.513Z",
+      "expiresAt": "2026-09-26T04:22:21.513Z"
+    },
+    "cb17558f0acd5c157afb165978ac92c39de051d50771cdcf0291c6bbdf725955": {
+      "id": "CRED-1e55e429e05b8d80",
+      "credentialHash": "cb17558f0acd5c157afb165978ac92c39de051d50771cdcf0291c6bbdf725955",
+      "electionId": "ELEC-MUE9WEGE-3291",
+      "status": "ISSUED",
+      "issuedAt": "2026-09-26T03:39:27.703Z",
+      "expiresAt": "2026-09-26T04:39:27.703Z"
     }
   },
   "blocks": [],
-  "electoralRollVoted": []
+  "electoralRollVoted": [
+    "TNL9807499"
+  ]
 }

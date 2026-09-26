@@ -238,7 +238,7 @@ export class SecurityMonitoringService {
   public static getSystemHealth(): SystemHealthState & { details: Record<string, string> } {
     const ledgerIntegrity = BlockchainLedgerService.verifyLedgerIntegrity();
 
-    const smsProvider = (process.env.TWILIO_ACCOUNT_SID ? 'TWILIO' : (process.env.FAST2SMS_API_KEY ? 'FAST2SMS' : 'DEVELOPMENT_SIMULATOR'));
+    const smsProvider = process.env.FAST2SMS_API_KEY ? 'FAST2SMS' : 'DEVELOPMENT_SIMULATOR';
     const smsHealth: SystemHealthState['smsGateway'] = 'HEALTHY';
     const blockchainHealth: SystemHealthState['blockchain'] = ledgerIntegrity.isTamperFree ? 'HEALTHY' : 'DEGRADED';
     const electoralRollHealth: SystemHealthState['electoralRoll'] = ElectoralRollService.isConfigured() ? 'HEALTHY' : 'NOT CONFIGURED';

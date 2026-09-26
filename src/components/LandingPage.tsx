@@ -6,11 +6,13 @@ import {
   Users, BarChart3
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.js';
+import { useVoiceGuidance } from './VoiceGuidance.js';
 import { Election } from '../types/index.js';
 
 export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const { accessibility, setAccessibility, toggleLanguage } = useAuth();
+  const vg = useVoiceGuidance();
   const [elections, setElections] = useState<Election[]>([]);
   const [systemHealth, setSystemHealth] = useState<any>(null);
 
@@ -28,33 +30,25 @@ export const LandingPage: React.FC = () => {
 
   const isTamil = accessibility.language === 'ta';
 
-  // ✅ VOICE FIX: Wait for async browser voice loading before Tamil TTS
-  const speakText = (text: string) => {
-    if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
+  // Register voice command for Landing Page
+  useEffect(() => {
+    if (!vg.voiceOn) return;
 
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = isTamil ? 'ta-IN' : 'en-IN';
-    u.rate = isTamil ? 0.85 : 0.9;
+    vg.speak('LANDING');
 
-    const doSpeak = () => {
-      if (isTamil) {
-        const voices = window.speechSynthesis.getVoices();
-        const tamilVoice = voices.find((v) => v.lang.startsWith('ta'));
-        if (tamilVoice) u.voice = tamilVoice;
+    vg.registerCommandHandler((cmd) => {
+      if (cmd === 'NEXT' || cmd === 'CONFIRM') {
+        navigate('/voter/login');
       }
-      window.speechSynthesis.speak(u);
-    };
+    });
 
-    const voices = window.speechSynthesis.getVoices();
-    if (voices.length > 0) {
-      doSpeak();
-    } else {
-      window.speechSynthesis.onvoiceschanged = () => {
-        window.speechSynthesis.onvoiceschanged = null;
-        doSpeak();
-      };
-    }
+    return () => {
+      vg.unregisterCommandHandler();
+    };
+  }, [vg.voiceOn, navigate]);
+
+  const speakText = (text: string) => {
+    vg.speakCustom(text);
   };
 
   const features = [
@@ -115,18 +109,14 @@ export const LandingPage: React.FC = () => {
             {/* Audio narration */}
             <button
               id="audio-narration-btn"
-              onClick={() =>
-                speakText(
-                  isTamil
-                    ? 'பிளாக்செயின் அடிப்படையிலான தானியங்கி மற்றும் தனியுரிமை பாதுகாக்கப்பட்ட மின்னணு வாக்குப்பதிவு அமைப்பு. குடிமக்கள் வாக்காளர் உள்நுழைவுக்கு தொடரவும்.'
-                    : 'Blockchain-Based Automated and Privacy-Preserving E-Voting System. Please proceed to Citizen Voter Login.'
-                )
-              }
-              className="hover:text-stone-900 flex items-center space-x-1 transition-colors"
-              title="Text to Speech"
+              onClick={() => vg.toggleVoice()}
+              className={`flex items-center space-x-1 transition-colors ${
+                vg.voiceOn ? 'text-emerald-700 font-bold' : 'hover:text-stone-900 text-stone-600'
+              }`}
+              title="Voice Assistant"
             >
-              <Volume2 className="w-3.5 h-3.5 text-amber-600" />
-              <span>{isTamil ? 'ஒலி உதவி' : 'Screen Reader'}</span>
+              <Volume2 className={`w-3.5 h-3.5 ${vg.voiceOn ? 'text-emerald-600' : 'text-amber-600'}`} />
+              <span>{vg.voiceOn ? 'Voice ON' : (isTamil ? 'குரல் உதவி' : 'Voice Assistant')}</span>
             </button>
 
             {/* High Contrast Toggle */}

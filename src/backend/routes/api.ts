@@ -25,6 +25,7 @@ import { UIDAIConfiguration } from '../integrations/uidai/UIDAIConfiguration.js'
 import { UidaiGatewayService } from '../services/UidaiGatewayService.js';
 import { DataStoreService } from '../services/DataStoreService.js';
 import { SolidityBlockchainManager } from '../services/SolidityBlockchainManager.js';
+import { WebAuthnService } from '../services/WebAuthnService.js';
 
 const router = Router();
 
@@ -568,6 +569,72 @@ router.get('/voter/status/:voterId/:electionId', (req: Request, res: Response) =
 });
 
 // ==========================================
+// 6B. WEBAUTHN FINGERPRINT AUTHENTICATION
+// ==========================================
+
+/**
+ * POST /api/v1/webauthn/register/options
+ * Returns PublicKeyCredentialCreationOptions for registering device fingerprint
+ */
+router.post('/webauthn/register/options', (req: Request, res: Response) => {
+  const voterId = req.body.voter_id || req.body.voterId;
+  if (!voterId) {
+    return res.status(400).json({ success: false, message: 'Voter ID is required.' });
+  }
+
+  const rpId = req.hostname || 'localhost';
+  const result = WebAuthnService.generateRegistrationOptions(voterId, rpId);
+  return res.status(result.success ? 200 : 400).json(result);
+});
+
+/**
+ * POST /api/v1/webauthn/register/verify
+ * Verifies attestation and saves WebAuthn credential in voter record
+ */
+router.post('/webauthn/register/verify', (req: Request, res: Response) => {
+  const voterId = req.body.voter_id || req.body.voterId;
+  const credentialResponse = req.body.response;
+
+  if (!voterId || !credentialResponse) {
+    return res.status(400).json({ success: false, message: 'Voter ID and credential response are required.' });
+  }
+
+  const result = WebAuthnService.verifyRegistrationResponse(voterId, credentialResponse);
+  return res.status(result.success ? 200 : 400).json(result);
+});
+
+/**
+ * POST /api/v1/webauthn/login/options
+ * Returns PublicKeyCredentialRequestOptions for authenticating via fingerprint
+ */
+router.post('/webauthn/login/options', (req: Request, res: Response) => {
+  const voterId = req.body.voter_id || req.body.voterId;
+  if (!voterId) {
+    return res.status(400).json({ success: false, message: 'Voter ID is required.' });
+  }
+
+  const rpId = req.hostname || 'localhost';
+  const result = WebAuthnService.generateAuthenticationOptions(voterId, rpId);
+  return res.status(result.success ? 200 : 400).json(result);
+});
+
+/**
+ * POST /api/v1/webauthn/login/verify
+ * Verifies assertion, confirms biometric authentication, and issues anonymous voting token
+ */
+router.post('/webauthn/login/verify', (req: Request, res: Response) => {
+  const voterId = req.body.voter_id || req.body.voterId;
+  const authResponse = req.body.response;
+
+  if (!voterId || !authResponse) {
+    return res.status(400).json({ success: false, message: 'Voter ID and biometric authentication response are required.' });
+  }
+
+  const result = WebAuthnService.verifyAuthenticationResponse(voterId, authResponse);
+  return res.status(result.success ? 200 : 400).json(result);
+});
+
+// ==========================================
 // 7. LOCAL VOTER VERIFICATION & OTP ENDPOINTS
 // ==========================================
 
@@ -800,7 +867,6 @@ router.post('/voting/ballots/cast', async (req: Request, res: Response) => {
     return res.status(200).json({
       success: true,
       status: 'CONFIRMED',
-      success: true,
       transaction_reference: result.transactionReference,
       transactionReference: result.transactionReference,
       transaction_hash: result.transactionReference,
@@ -822,7 +888,6 @@ router.post('/voting/ballots/cast', async (req: Request, res: Response) => {
     return res.status(500).json({
       success: false,
       status: 'LEDGER_ERROR',
-      success: false,
       message: 'Failed to record vote on permissioned blockchain ledger.',
     });
   }
@@ -1017,7 +1082,7 @@ router.get('/admin/votes', (req: Request, res: Response) => {
   }
 
   const voteBlocks = blocks.map((b) => {
-    const tx = b.transactions[0] || {} as any;
+    const tx = b.transactions[0] || ({} as any);
     const candidateId = ballotMap.get(tx.ballotCommitment) || 'CAND-01';
     return {
       blockIndex: b.index,
@@ -1035,6 +1100,15 @@ router.get('/admin/votes', (req: Request, res: Response) => {
       status: tx.status || 'COMMITTED',
       blockchainStatus: 'CONFIRMED',
     };
+  });
+
+  res.json({
+    totalBlocks: voteBlocks.length,
+    blocks: voteBlocks,
+  });
+});
+
+// ==========================================
 // 12. MOBILE OTP ALIAS ENDPOINTS (Free-Tier SMS)
 // ==========================================
 
@@ -1138,11 +1212,6 @@ router.get('/voting/status', (req: Request, res: Response) => {
     voter_id: voterId.toUpperCase(),
     has_voted: hasVoted,
     status: hasVoted ? 'VOTE_RECORDED' : 'NOT_YET_VOTED',
-  });
-
-  res.json({
-    totalBlocks: voteBlocks.length,
-    blocks: voteBlocks,
   });
 });
 

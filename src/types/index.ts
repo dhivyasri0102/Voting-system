@@ -153,7 +153,8 @@ export interface SecurityEvent {
     | 'RATE_LIMITED'
     | 'REJECTED_TRANSACTION'
     | 'ADMIN_ACTION'
-    | 'AUDIT_TRIGGERED';
+    | 'AUDIT_TRIGGERED'
+    | 'ACCOUNT_LOCKOUT';
   severity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   description: string;
   correlationId: string;

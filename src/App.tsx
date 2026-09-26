@@ -29,7 +29,6 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <VoiceGuidanceProvider>
-          <SeniorModeAssistant />
           <VoiceGuidanceBar />
           <Routes>
           {/* 1. Landing Page */}

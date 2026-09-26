@@ -38,32 +38,49 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   // ✅ VOICE FIX: Wait for async voice loading before speaking Tamil
+  const activeUttRef = React.useRef<SpeechSynthesisUtterance | null>(null);
+
   const speakText = (text: string) => {
-    if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
+    if (!text || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    
+    try {
+      window.speechSynthesis.cancel();
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
+    } catch {}
 
     const u = new SpeechSynthesisUtterance(text);
+    activeUttRef.current = u;
+
     u.lang = accessibility.language === 'ta' ? 'ta-IN' : 'en-IN';
     u.rate = 0.9;
 
-    const doSpeak = () => {
-      if (accessibility.language === 'ta') {
-        const voices = window.speechSynthesis.getVoices();
-        const tamilVoice = voices.find((v) => v.lang.startsWith('ta'));
-        if (tamilVoice) u.voice = tamilVoice;
+    try {
+      const voices = window.speechSynthesis.getVoices();
+      if (voices && voices.length > 0) {
+        const match = voices.find((v) => v.lang.toLowerCase().startsWith(accessibility.language === 'ta' ? 'ta' : 'en'));
+        if (match) u.voice = match;
       }
-      window.speechSynthesis.speak(u);
+    } catch {}
+
+    u.onend = () => {
+      activeUttRef.current = null;
+    };
+    u.onerror = () => {
+      activeUttRef.current = null;
     };
 
-    const voices = window.speechSynthesis.getVoices();
-    if (voices.length > 0) {
-      doSpeak();
-    } else {
-      window.speechSynthesis.onvoiceschanged = () => {
-        window.speechSynthesis.onvoiceschanged = null;
-        doSpeak();
-      };
-    }
+    setTimeout(() => {
+      try {
+        if (window.speechSynthesis.paused) {
+          window.speechSynthesis.resume();
+        }
+        window.speechSynthesis.speak(u);
+      } catch (err) {
+        console.warn('Failed to speak Header utterance:', err);
+      }
+    }, 60);
   };
 
   return (

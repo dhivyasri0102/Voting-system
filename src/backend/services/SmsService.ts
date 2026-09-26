@@ -1,15 +1,14 @@
 /**
- * Free-Tier SMS Gateway Service for Citizen Verification
+ * SMS Gateway Service (Twilio Removed)
  * 
  * Supports:
- * 1. Twilio (Free Trial Account): TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_PHONE_NUMBER
- * 2. Fast2SMS (Free Tier for India): FAST2SMS_API_KEY
- * 3. Local Development Mode: Formatted console output with simulated dispatch
+ * 1. Fast2SMS (Free Tier for India): FAST2SMS_API_KEY
+ * 2. Local Development Mode: Formatted console output with simulated dispatch
  */
 
 export interface SmsDispatchResult {
   success: boolean;
-  provider: 'TWILIO' | 'FAST2SMS' | 'DEVELOPMENT_SIMULATOR';
+  provider: 'FAST2SMS' | 'DEVELOPMENT_SIMULATOR';
   messageId?: string;
   debugOtp?: string; // Only included in non-production environments
   error?: string;
@@ -22,47 +21,6 @@ export class SmsService {
   public static async sendOtp(mobileNumber: string, otp: string, voterName?: string): Promise<SmsDispatchResult> {
     const cleanNumber = mobileNumber.replace(/\D/g, '');
     const message = `Election Commission of India: Your OTP for voter authentication is ${otp}. Valid for 2 minutes. Do not share with anyone. - ECI`;
-
-    // 1. Try Twilio if credentials are provided
-    const twilioSid = process.env.TWILIO_ACCOUNT_SID;
-    const twilioAuth = process.env.TWILIO_AUTH_TOKEN;
-    const twilioFrom = process.env.TWILIO_FROM_PHONE_NUMBER;
-
-    if (twilioSid && twilioAuth && twilioFrom) {
-      try {
-        const formattedTo = cleanNumber.startsWith('+') ? cleanNumber : (cleanNumber.length === 10 ? `+91${cleanNumber}` : `+${cleanNumber}`);
-        const auth = Buffer.from(`${twilioSid}:${twilioAuth}`).toString('base64');
-        const body = new URLSearchParams({
-          To: formattedTo,
-          From: twilioFrom,
-          Body: message,
-        });
-
-        const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${twilioSid}/Messages.json`, {
-          method: 'POST',
-          headers: {
-            Authorization: `Basic ${auth}`,
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: body.toString(),
-        });
-
-        if (res.ok) {
-          const data: any = await res.json();
-          console.log(`[SMS-TWILIO] Live OTP sent to ${mobileNumber.slice(-4).padStart(mobileNumber.length, '*')}. SID: ${data.sid}`);
-          return {
-            success: true,
-            provider: 'TWILIO',
-            messageId: data.sid,
-          };
-        } else {
-          const errData = await res.text();
-          console.warn(`[SMS-TWILIO] Failed, falling back to simulator:`, errData);
-        }
-      } catch (err) {
-        console.warn(`[SMS-TWILIO] Error:`, err);
-      }
-    }
 
     // 2. Try Fast2SMS if API key is provided
     const fast2smsKey = process.env.FAST2SMS_API_KEY;

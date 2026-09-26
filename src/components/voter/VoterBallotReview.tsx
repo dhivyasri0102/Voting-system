@@ -6,18 +6,14 @@ import {
 import { useAuth } from '../../context/AuthContext.js';
 import { Candidate, Election } from '../../types/index.js';
 import { VoterLayoutContext } from './VoterLayout.js';
+import { useVoiceGuidance } from '../VoiceGuidance.js';
 
 export const VoterBallotReview: React.FC = () => {
   const { electionId } = useParams<{ electionId: string }>();
   const navigate = useNavigate();
   const { voterSession, updateVoterSession, accessibility } = useAuth();
-  const { 
-    speakText, 
-    voiceActive, 
-    isTanglish, 
-    registerVoiceHandler, 
-    unregisterVoiceHandler 
-  } = useOutletContext<VoterLayoutContext>();
+  const vg = useVoiceGuidance();
+  const isTamil = accessibility.language === 'ta';
 
   const [candidate, setCandidate] = useState<Candidate | null>(null);
   const [election, setElection] = useState<Election | null>(null);
@@ -61,10 +57,8 @@ export const VoterBallotReview: React.FC = () => {
     setLoading(true);
     setErrorMessage(null);
 
-    const submittingMsg = isTanglish 
-      ? 'Ungaloda vote submit pannitu irukku. Kaaththirungal.' 
-      : 'Submitting your ballot to blockchain. Please wait.';
-    speakText(submittingMsg, true);
+    const submittingMsg = 'Ungaloda vote blockchain-la submit pannitu irukku. Kaaththirungal.';
+    vg.speakCustom(submittingMsg);
 
     try {
       const res = await fetch('/api/v1/voting/ballots/cast', {
@@ -81,9 +75,9 @@ export const VoterBallotReview: React.FC = () => {
 
       const data = await res.json();
       if (!res.ok || !data.success) {
-        const failMsg = data.message || (isTanglish ? 'Vote submit aagala. Mella try pannunga.' : 'Ballot casting failed.');
+        const failMsg = data.message || 'Vote submit aagala. Marubadiyum try pannunga.';
         setErrorMessage(failMsg);
-        speakText(failMsg, true);
+        vg.speakCustom(failMsg);
       } else {
         // Clear selection from temporary storage
         sessionStorage.removeItem('evoting_ballot_selection');
@@ -104,32 +98,30 @@ export const VoterBallotReview: React.FC = () => {
         navigate('/voter/vote-confirmation');
       }
     } catch (err) {
-      const netErr = isTanglish 
-        ? 'Network error. Blockchain-il vote record aagala.' 
-        : 'Network error attempting to cast ballot to blockchain.';
+      const netErr = 'Network error. Blockchain-il vote record aagala.';
       setErrorMessage(netErr);
-      speakText(netErr, true);
+      vg.speakCustom(netErr);
     } finally {
       setLoading(false);
     }
-  }, [electionId, candidate, voterSession, loading, isTanglish, speakText, updateVoterSession, navigate]);
+  }, [electionId, candidate, voterSession, loading, updateVoterSession, navigate, vg]);
 
   // Voice announcement: page entry when candidate data is ready
   const reviewAnnouncedRef = useRef(false);
   useEffect(() => {
     if (candidate && !reviewAnnouncedRef.current) {
-      if (voiceActive || accessibility.speechAssistance || accessibility.seniorCitizenMode) {
-        reviewAnnouncedRef.current = true;
-        const msg = isTanglish
-          ? `Neenga select panna candidate ${candidate.name}, party ${candidate.party || 'Independent'}, symbol ${candidate.symbol}. Correct-aa irundha Confirm nu sollunga. Candidate-ai maatha Back nu sollunga. Vote submit pannina apram change panna mudiyathu.`
-          : `You selected candidate ${candidate.name}, party ${candidate.party || 'Independent'}, symbol ${candidate.symbol}. Say Confirm to submit your vote, or say Back to change your choice.`;
-        speakText(msg, true);
+      reviewAnnouncedRef.current = true;
+      if (vg.voiceOn) {
+        const msg = `Neenga select panna candidate ${candidate.name}, party ${candidate.party || 'Independent'}, symbol ${candidate.symbol}. Correct-aa irundha Confirm nu sollunga. Candidate-ai maatha Back nu sollunga. Vote submit pannina apram change panna mudiyathu.`;
+        vg.speakCustom(msg);
       }
     }
-  }, [candidate, voiceActive, accessibility.speechAssistance, accessibility.seniorCitizenMode, isTanglish, speakText]);
+  }, [candidate, vg.voiceOn]);
 
   // Register voice navigation commands
   useEffect(() => {
+    if (!vg.voiceOn) return;
+
     const handleVoiceCommand = (cmd: string) => {
       if (cmd === 'CONFIRM') {
         handleConfirmVote();
@@ -137,19 +129,17 @@ export const VoterBallotReview: React.FC = () => {
         navigate(`/voter/election/${electionId}/candidates`);
       } else if (cmd === 'REPEAT') {
         if (candidate) {
-          const msg = isTanglish
-            ? `Candidate ${candidate.name}, party ${candidate.party || 'Independent'}. Vote confirm panna Confirm nu sollunga. Maatha Back nu sollunga.`
-            : `Candidate ${candidate.name}. Say Confirm to cast your vote, or say Back to change.`;
-          speakText(msg, true);
+          const msg = `Candidate ${candidate.name}, party ${candidate.party || 'Independent'}. Vote confirm panna Confirm nu sollunga. Maatha Back nu sollunga.`;
+          vg.speakCustom(msg);
         }
       }
     };
 
-    registerVoiceHandler(handleVoiceCommand);
+    vg.registerCommandHandler(handleVoiceCommand);
     return () => {
-      unregisterVoiceHandler();
+      vg.unregisterCommandHandler();
     };
-  }, [registerVoiceHandler, unregisterVoiceHandler, handleConfirmVote, navigate, electionId, candidate, isTanglish, speakText]);
+  }, [vg.voiceOn, handleConfirmVote, navigate, electionId, candidate]);
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -159,17 +149,17 @@ export const VoterBallotReview: React.FC = () => {
           className="text-xs text-slate-500 hover:text-slate-800 flex items-center space-x-1"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          <span>{isTanglish ? 'Candidate select page-ku thirumba' : 'Go Back to Change Selection'}</span>
+          <span>{isTamil ? 'வேட்பாளர் தேர்வு பக்கத்திற்கு திரும்ப' : 'Go Back to Change Selection'}</span>
         </Link>
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6">
         <div className="text-center pb-4 border-b border-slate-100">
           <span className="text-xs font-mono font-bold text-emerald-700 uppercase">
-            {isTanglish ? 'Vote Confirmation' : 'Review & Confirm Your Vote'}
+            {isTamil ? 'வாக்கு உறுதிப்படுத்தல்' : 'Review & Confirm Your Vote'}
           </span>
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 mt-1">
-            {isTanglish ? 'Ungal Vote Choice Verification' : 'Ballot Choice Verification'}
+            {isTamil ? 'உங்கள் வாக்கு தேர்வு சரிபார்ப்பு' : 'Ballot Choice Verification'}
           </h1>
           <p className="text-xs text-slate-500 mt-1">
             {election?.title} • {election?.constituency}
@@ -186,7 +176,7 @@ export const VoterBallotReview: React.FC = () => {
         {/* Selected Candidate Card */}
         <div className="p-6 rounded-2xl bg-emerald-50/60 border-2 border-emerald-500 space-y-4">
           <div className="text-xs font-bold text-emerald-900 uppercase tracking-wider">
-            {isTanglish ? 'Neenga Select Panna Candidate:' : 'You Have Selected:'}
+            {isTamil ? 'நீங்கள் தேர்ந்தெடுத்த வேட்பாளர்:' : 'You Have Selected:'}
           </div>
 
           <div className="flex items-center space-x-4">
@@ -216,11 +206,11 @@ export const VoterBallotReview: React.FC = () => {
         <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs space-y-1">
           <div className="font-bold flex items-center space-x-1.5 text-amber-950">
             <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-            <span>{isTanglish ? 'Mukkiyamaana Arivippu:' : 'Statutory Finality Warning:'}</span>
+            <span>{isTamil ? 'முக்கிய அறிவிப்பு:' : 'Statutory Finality Warning:'}</span>
           </div>
           <p className="leading-relaxed">
-            {isTanglish
-              ? "Ungal vote confirm pannina apram, change panna mudiyathu. Vote ledger-il permanently record aagividum."
+            {isTamil
+              ? 'உங்கள் வாக்கை உறுதிசெய்த பிறகு, மாற்ற முடியாது. வாக்கு லெட்ஜரில் நிரந்தரமாக பதிவு செய்யப்படும்.'
               : 'Once you confirm your vote, it cannot be changed, reversed, or cast again. Your anonymous voting credential will be permanently marked as CONSUMED in the ledger.'}
           </p>
         </div>
@@ -229,12 +219,9 @@ export const VoterBallotReview: React.FC = () => {
         <div className="p-3 bg-slate-50 rounded-xl text-[11px] text-slate-600 flex items-center space-x-2">
           <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
           <span>
-            {isTanglish
-              ? "Ungal vote anonymous cryptographic proof-aa register aagum. Identity link irukadhu."
-              : 'Your vote is transmitted anonymously. Zero record links your identity (EPIC/Aadhaar) to this candidate choice.'}
             {isTamil
               ? 'உங்கள் வாக்கு அநாமதேய குறியீடாக மட்டுமே சங்கிலியில் பதிவு செய்யப்படும்; உங்கள் அடையாளத்துடன் இணைக்கப்படாது.'
-              : 'Your vote is transmitted anonymously. No record links your EPIC identity to this candidate choice.'}
+              : 'Your vote is transmitted anonymously. Zero record links your identity (EPIC/Aadhaar) to this candidate choice.'}
           </span>
         </div>
 
@@ -245,7 +232,7 @@ export const VoterBallotReview: React.FC = () => {
             onClick={() => navigate(`/voter/election/${electionId}/candidates`)}
             className="w-full sm:w-auto px-5 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors"
           >
-            {isTanglish ? '← Candidate-ai Maatha' : '← Go Back & Change'}
+            {isTamil ? '← வேட்பாளரை மாற்ற' : '← Go Back & Change'}
           </button>
 
           <button
@@ -255,8 +242,6 @@ export const VoterBallotReview: React.FC = () => {
             className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-extrabold shadow-lg hover:shadow-emerald-600/20 transition-all flex items-center justify-center space-x-2 disabled:opacity-50"
           >
             <Vote className="w-4 h-4" />
-            <span>{loading ? 'Recording Ballot...' : isTanglish ? 'Vote Confirm Panna' : 'Confirm & Cast Vote'}</span>
-            {/* ✅ BUG FIX: Translate loading text to Tamil when Tamil mode active */}
             <span>{loading
               ? (isTamil ? 'வாக்கு பதிவு செய்கிறது...' : 'Recording Ballot...')
               : (isTamil ? 'வாக்கை உறுதி செய்க' : 'Confirm & Cast Vote')
