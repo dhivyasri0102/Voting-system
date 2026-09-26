@@ -238,8 +238,8 @@ export class SecurityMonitoringService {
   public static getSystemHealth(): SystemHealthState & { details: Record<string, string> } {
     const ledgerIntegrity = BlockchainLedgerService.verifyLedgerIntegrity();
 
-    const smsProvider = process.env.TWILIO_ACCOUNT_SID ? 'TWILIO' : 'DEVELOPMENT_SIMULATOR';
-    const smsHealth: SystemHealthState['smsGateway'] = 'HEALTHY';
+    const smsProvider = 'DISABLED';
+    const smsHealth: SystemHealthState['smsGateway'] = 'NOT CONFIGURED';
     const blockchainHealth: SystemHealthState['blockchain'] = ledgerIntegrity.isTamperFree ? 'HEALTHY' : 'DEGRADED';
     const electoralRollHealth: SystemHealthState['electoralRoll'] = ElectoralRollService.isConfigured() ? 'HEALTHY' : 'NOT CONFIGURED';
 
@@ -251,7 +251,7 @@ export class SecurityMonitoringService {
       smsGateway: smsHealth,
       electoralRoll: electoralRollHealth,
       details: {
-        smsGatewayStatus: `Active Provider: ${smsProvider}`,
+        smsGatewayStatus: `SMS delivery: ${smsProvider}`,
         blockchainBlocks: `${ledgerIntegrity.totalBlocks} Blocks Verified`,
         blockchainDiscrepancies: `${ledgerIntegrity.discrepancies.length} detected`,
         electoralRollMode: ElectoralRollService.getEnvironment().toUpperCase(),
@@ -289,7 +289,7 @@ export class SecurityMonitoringService {
       '',
       '# HELP evoting_sms_gateway_active SMS Gateway operational (1=true, 0=false)',
       '# TYPE evoting_sms_gateway_active gauge',
-      `evoting_sms_gateway_active 1`,
+      `evoting_sms_gateway_active 0`,
       '',
     ].join('\n');
   }

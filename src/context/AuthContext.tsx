@@ -11,6 +11,7 @@ interface AdminSessionData {
     role: UserRole;
     profile?: AdminProfile;
   };
+  credentialElectionId?: string;
   expiresAt: string;
 }
 
@@ -24,6 +25,7 @@ export interface VoterSessionData {
   authReference?: string;
   rawCredential?: string;
   credentialHash?: string;
+  credentialElectionId?: string;
   lastVoteReceipt?: {
     transactionReference: string;
     blockIndex: number;

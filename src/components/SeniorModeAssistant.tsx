@@ -75,7 +75,7 @@ export const SeniorModeAssistant: React.FC = () => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [showPanel, setShowPanel] = useState(false);
 
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<any>(null);
   const speakQueueRef = useRef<string[]>([]);
   const isSpeakingRef = useRef(false);
 

@@ -18,6 +18,7 @@ export const VoterBallotReview: React.FC = () => {
     registerVoiceHandler, 
     unregisterVoiceHandler 
   } = useOutletContext<VoterLayoutContext>();
+  const isTamil = accessibility.language === 'ta';
 
   const [candidate, setCandidate] = useState<Candidate | null>(null);
   const [election, setElection] = useState<Election | null>(null);

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { Navigate, Outlet, NavLink, useNavigate } from 'react-router-dom';
 import {
   Vote,
   LogOut,
@@ -78,8 +78,7 @@ export const VoterLayout: React.FC = () => {
 
   // Auth guard — placed AFTER all hook declarations
   if (!isVoterAuthenticated || !voterSession) {
-    navigate('/voter/login', { replace: true });
-    return null;
+    return <Navigate to="/voter/login" replace />;
   }
 
   // ─── Speech Synthesis ─────────────────────────────────────────────────────

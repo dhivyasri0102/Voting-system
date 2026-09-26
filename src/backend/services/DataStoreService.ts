@@ -13,7 +13,7 @@ import { Election, Candidate, VotingCredential, BlockchainBlock } from '../../ty
 export interface RegisteredVoter {
   voterId: string;       // EPIC Number (e.g. TNL1029384)
   fullName: string;
-  mobileNumber: string;  // For SMS OTP dispatch
+  mobileNumber: string;  // Retained for voter records; demo login does not send SMS
   constituency: string;
   state: string;
   status: 'ACTIVE' | 'INACTIVE';

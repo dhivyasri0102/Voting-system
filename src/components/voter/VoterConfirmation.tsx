@@ -10,6 +10,7 @@ import { VoterLayoutContext } from './VoterLayout.js';
 export const VoterConfirmation: React.FC = () => {
   const navigate = useNavigate();
   const { voterSession, logoutVoter, accessibility } = useAuth();
+  const isTamil = accessibility.language === 'ta';
   const [copied, setCopied] = useState<boolean>(false);
   const { 
     speakText, 

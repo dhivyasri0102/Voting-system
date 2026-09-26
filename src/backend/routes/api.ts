@@ -1,3 +1,4 @@
+
 /**
  * Master REST API Router for National E-Voting Architecture
  * 
@@ -587,20 +588,90 @@ router.post(['/verification/voter-id', '/verification/voter-id/'], (req: Request
 });
 
 /**
+ * POST /api/v1/auth/voter/demo-login
+ * Voter-ID-only login for local demonstrations. Production requires real OTP authentication.
+ */
+router.post('/auth/voter/demo-login', (req: Request, res: Response) => {
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(403).json({
+      success: false,
+      message: 'Voter-ID-only login is disabled in production.',
+    });
+  }
+
+  const voterId = String(req.body.voter_id || '').trim().toUpperCase();
+  const voter = DataStoreService.getVoter(voterId);
+  if (!voter || voter.status !== 'ACTIVE') {
+    return res.status(401).json({
+      success: false,
+      message: 'Voter ID was not found or is inactive.',
+    });
+  }
+
+  if (DataStoreService.hasVoted(voterId)) {
+    return res.status(409).json({
+      success: false,
+      message: 'This voter has already voted.',
+    });
+  }
+
+  const election = DataStoreService.getElections().find((item) => item.status === 'OPEN');
+  if (!election) {
+    return res.status(409).json({
+      success: false,
+      message: 'There is no open election available for voting.',
+    });
+  }
+
+  const credential = AnonymousCredentialService.issueCredential(election.id);
+  const fullNameMasked = voter.fullName
+    .split(/\s+/)
+    .map((part) => part ? `${part[0]}${'*'.repeat(Math.max(1, part.length - 1))}` : part)
+    .join(' ');
+  const mobileMasked = voter.mobileNumber.length >= 4
+    ? voter.mobileNumber.slice(-4).padStart(voter.mobileNumber.length, '*')
+    : '****';
+
+  return res.json({
+    success: true,
+    authReference: `DEMO-${Date.now()}`,
+    voter: {
+      voterId: voter.voterId,
+      fullNameMasked,
+      constituency: voter.constituency,
+      state: voter.state,
+      mobileMasked,
+    },
+    electionId: election.id,
+    credential: {
+      raw: credential.rawCredential,
+      hash: credential.credentialHash,
+    },
+  });
+});
+
+/**
  * POST /api/v1/verification/otp/start/
  * POST /api/v1/verification/otp/start
  * Step 2: Generates a secure 6-digit OTP and dispatches it via SmsService.
  */
 router.post(['/verification/otp/start', '/verification/otp/start/'], async (req: Request, res: Response) => {
-  const { voter_id, mobile_number } = req.body;
-  const result = await VoterVerificationService.startOtp(voter_id, mobile_number);
+  const { voter_id } = req.body;
+  const result = await VoterVerificationService.startOtp(voter_id);
 
   if (!result.success) {
-    const statusCode = result.cooldown_seconds ? 429 : 400;
+    const statusCode = result.service_unavailable ? 503 : result.cooldown_seconds ? 429 : 400;
     return res.status(statusCode).json(result);
   }
 
-  return res.status(200).json(result);
+  return res.status(200).json({
+    success: true,
+    verification_id: result.verification_id,
+    mobile_masked: result.mobile_masked,
+    expires_in_seconds: result.expires_in_seconds,
+    provider: result.provider,
+    message: result.message,
+  });
 });
 
 /**
@@ -608,12 +679,12 @@ router.post(['/verification/otp/start', '/verification/otp/start/'], async (req:
  * POST /api/v1/verification/otp/verify
  * Step 3: Verifies the 6-digit OTP entered by the voter.
  */
-router.post(['/verification/otp/verify', '/verification/otp/verify/'], (req: Request, res: Response) => {
+router.post(['/verification/otp/verify', '/verification/otp/verify/'], async (req: Request, res: Response) => {
   const { verification_id, otp } = req.body;
-  const result = VoterVerificationService.verifyOtp(verification_id, otp);
+  const result = await VoterVerificationService.verifyOtp(verification_id, otp);
 
   if (!result.verified) {
-    const statusCode = result.blocked ? 429 : 400;
+    const statusCode = result.service_unavailable ? 503 : result.blocked ? 429 : 400;
     return res.status(statusCode).json(result);
   }
 
@@ -798,7 +869,6 @@ router.post('/voting/ballots/cast', async (req: Request, res: Response) => {
     return res.status(200).json({
       success: true,
       status: 'CONFIRMED',
-      success: true,
       transaction_reference: result.transactionReference,
       transactionReference: result.transactionReference,
       transaction_hash: result.transactionReference,
@@ -820,7 +890,6 @@ router.post('/voting/ballots/cast', async (req: Request, res: Response) => {
     return res.status(500).json({
       success: false,
       status: 'LEDGER_ERROR',
-      success: false,
       message: 'Failed to record vote on permissioned blockchain ledger.',
     });
   }
@@ -995,39 +1064,37 @@ router.get('/admin/votes', (req: Request, res: Response) => {
     blocks: voteBlocks,
   });
 });
-// 11. MOBILE OTP ALIAS ENDPOINTS (Twilio SMS)
+// 11. Legacy local OTP simulator endpoints
 // ==========================================
 
 /**
  * POST /api/v1/verification/send-otp
  * Mobile number OTP dispatch (alias for /verification/otp/start)
- * Uses Twilio credentials configured on the server.
+ * Sends no SMS; retained for legacy development tests only.
  */
 router.post('/verification/send-otp', async (req: Request, res: Response) => {
-  const { phone, voter_id } = req.body;
+  const { voter_id } = req.body;
 
-  if (!phone || !voter_id) {
+  if (!voter_id) {
     return res.status(400).json({
       success: false,
-      message: 'Mobile number and voter ID are required.',
-    });
-  }
-
-  const cleanPhone = phone.replace(/\D/g, '');
-  if (!/^[6-9]\d{9}$/.test(cleanPhone)) {
-    return res.status(400).json({
-      success: false,
-      message: 'Invalid Indian mobile number. Must be 10 digits starting with 6-9.',
+      message: 'Voter ID is required.',
     });
   }
 
   try {
-    const result = await VoterVerificationService.startOtp(voter_id, cleanPhone);
+    const result = await VoterVerificationService.startOtp(voter_id);
     if (!result.success) {
-      return res.status(result.cooldown_seconds ? 429 : 400).json(result);
+      const statusCode = result.service_unavailable ? 503 : result.cooldown_seconds ? 429 : 400;
+      return res.status(statusCode).json(result);
     }
     return res.status(200).json({
-      ...result,
+      success: true,
+      verification_id: result.verification_id,
+      mobile_masked: result.mobile_masked,
+      expires_in_seconds: result.expires_in_seconds,
+      provider: result.provider,
+      message: result.message,
       transactionId: result.verification_id || ('TXN-' + Date.now()),
     });
   } catch {
@@ -1043,7 +1110,7 @@ router.post('/verification/send-otp', async (req: Request, res: Response) => {
  * Mobile OTP verification (alias for /verification/otp/verify)
  * Returns anonymous voting credential on success
  */
-router.post('/verification/verify-otp', (req: Request, res: Response) => {
+router.post('/verification/verify-otp', async (req: Request, res: Response) => {
   const { transaction_id, otp, voter_id } = req.body;
 
   if (!transaction_id || !otp) {
@@ -1060,9 +1127,10 @@ router.post('/verification/verify-otp', (req: Request, res: Response) => {
     });
   }
 
-  const result = VoterVerificationService.verifyOtp(transaction_id, otp);
+  const result = await VoterVerificationService.verifyOtp(transaction_id, otp);
   if (!result.verified) {
-    return res.status(result.blocked ? 429 : 400).json({
+    const statusCode = result.service_unavailable ? 503 : result.blocked ? 429 : 400;
+    return res.status(statusCode).json({
       ...result,
       success: false,
     });

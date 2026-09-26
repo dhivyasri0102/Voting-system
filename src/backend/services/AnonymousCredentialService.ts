@@ -1,7 +1,7 @@
 /**
  * Anonymous Credential Service
  * 
- * Provides cryptographically unlinkable, single-use anonymous voting tokens.
+ * Provides cryptographically protected, single-use anonymous voting tokens.
  * Crucial Privacy Principle:
  * - The identity domain issues the token.
  * - The voting domain consumes only the token hash.
