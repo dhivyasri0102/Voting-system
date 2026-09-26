@@ -361,7 +361,7 @@ export const LandingPage: React.FC = () => {
             {[
               { label: 'Solidity Smart Contract', sub: 'EVM ^0.8.34 Osaka' },
               { label: 'Cyber Defense', sub: 'Pausable & RBAC Shield' },
-              { label: 'SMS OTP Gateway', sub: 'Twilio / Fast2SMS' },
+              { label: 'Voter Demo Login', sub: 'Voter ID' },
               { label: 'Keccak-256 + ZK', sub: 'Nullifier Privacy Core' },
             ].map((tech, i) => (
               <div key={i} className="p-3 bg-stone-50 rounded-xl border border-stone-100 text-center">
@@ -379,8 +379,8 @@ export const LandingPage: React.FC = () => {
           </h3>
           <p>
             {isTamil
-              ? 'இந்த தளம் இந்திய தேர்தல் ஆணையத்தின் வழிகாட்டுதலின் கீழ், வாக்காளர்களின் அரசியலமைப்பு உரிமைகளைப் பாதுகாக்கும் நோக்குடன் உருவாக்கப்பட்டுள்ளது. வாக்காளர்கள் தங்கள் வாக்காளர் அடையாள அட்டை மற்றும் மொபைல் OTP வழியாக பாதுகாப்பாகவும் ரகசியமாகவும் வாக்களிக்கும் வசதியை இது உறுதி செய்கிறது.'
-              : 'Developed strictly under statutory constitutional guidelines of the Election Commission of India. The architecture maintains end-to-end cryptographically secured voting using free-tier SMS OTP (Twilio/Fast2SMS), ensuring verified citizens exercise their franchise with total privacy and anonymity.'}
+              ? 'இது உள்ளூர் விளக்க மாதிரி. வாக்காளர் அடையாள எண்ணைப் பயன்படுத்தி உள்நுழைந்து, ஒருமுறை பயன்படும் அநாமதேய வாக்குச் சான்றிதழுடன் வாக்களிக்கலாம். SMS அனுப்பப்படாது.'
+              : 'Demonstration voting flow with voter-ID login and single-use anonymous credentials. SMS verification is not enabled in this local prototype.'}
           </p>
         </section>
       </main>
@@ -396,7 +396,7 @@ export const LandingPage: React.FC = () => {
             <span>•</span>
             <span>Solidity Smart Contract</span>
             <span>•</span>
-            <span>SMS OTP Verified</span>
+            <span>Voter-ID Demo</span>
           </div>
         </div>
       </footer>

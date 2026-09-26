@@ -134,10 +134,10 @@ export const VoterDashboard: React.FC = () => {
           </div>
 
           <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-            <span className="text-slate-500">{isTamil ? 'மொபைல் OTP அங்கீகாரம்' : 'Mobile SMS OTP Authentication'}</span>
+            <span className="text-slate-500">{isTamil ? 'வாக்காளர் அடையாள உள்நுழைவு' : 'Voter-ID Demo Login'}</span>
             <div className="font-bold text-slate-900 flex items-center space-x-1 mt-0.5">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-              <span>{isTamil ? 'OTP உறுதி செய்யப்பட்டது' : 'OTP Confirmed'}</span>
+              <span>{isTamil ? 'அடையாள எண் சரிபார்க்கப்பட்டது' : 'Voter ID Confirmed'}</span>
             </div>
           </div>
 
@@ -163,7 +163,8 @@ export const VoterDashboard: React.FC = () => {
         <div className="grid grid-cols-1 gap-4">
           {elections.map((elec) => {
             const isOpen = elec.status === 'OPEN';
-            const canVote = isOpen && !hasVoted;
+            const canVote = isOpen && !hasVoted &&
+              (!voterSession?.credentialElectionId || voterSession.credentialElectionId === elec.id);
 
             return (
               <div

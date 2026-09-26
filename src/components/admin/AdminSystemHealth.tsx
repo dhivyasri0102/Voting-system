@@ -144,12 +144,12 @@ export const AdminSystemHealth: React.FC = () => {
           <div className="flex items-center justify-between">
             <span className="font-bold text-slate-800 text-sm flex items-center space-x-2">
               <Activity className="w-4 h-4 text-amber-600" />
-              <span>SMS OTP Gateway</span>
+              <span>SMS Delivery</span>
             </span>
             {getStatusBadge(healthData?.components?.smsGateway || 'NOT CONFIGURED')}
           </div>
           <p className="text-xs text-slate-500">
-            Twilio or Fast2SMS delivery. Reports NOT CONFIGURED until provider credentials are supplied.
+            SMS delivery is disabled. Voter demo login uses voter ID only.
           </p>
         </div>
 

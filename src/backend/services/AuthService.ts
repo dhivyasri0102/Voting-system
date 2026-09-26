@@ -3,7 +3,7 @@
  * 
  * Strict separation:
  * - ELECTION_AUTHORITY: Manages elections, candidates, lifecycle, aggregate results. CANNOT vote or modify ballots.
- * - VOTER: Authenticates via Electoral Roll & SMS OTP, receives anonymous token, casts single ballot. CANNOT access admin.
+ * - VOTER: Uses the local demo voter-ID flow and anonymous token. Production must require a real identity factor.
  * - AUDITOR: Inspects blockchain ledger, verifies CAG audit reports.
  * - SYSTEM_ADMIN: Manages infrastructure health.
  */

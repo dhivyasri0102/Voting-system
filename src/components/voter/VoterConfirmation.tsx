@@ -10,9 +10,9 @@ import { useVoiceGuidance } from '../VoiceGuidance.js';
 export const VoterConfirmation: React.FC = () => {
   const navigate = useNavigate();
   const { voterSession, logoutVoter, accessibility } = useAuth();
+  const isTamil = accessibility.language === 'ta';
   const [copied, setCopied] = useState<boolean>(false);
   const vg = useVoiceGuidance();
-  const isTamil = accessibility.language === 'ta';
 
   // On mount: announce success in Tanglish.
   // NEVER announce candidate name, party, or vote choice to preserve secret ballot privacy.

@@ -107,7 +107,7 @@ export const Header: React.FC<HeaderProps> = ({
                   GOV.IN • ECI
                 </span>
                 <span className="text-xs text-slate-400">
-                  Secured by Solidity EVM Smart Contract & SMS OTP authentication
+                  Solidity EVM Smart Contract • Local voter-ID demo login
                 </span>
               </div>
               <h1 className="text-lg sm:text-xl font-bold tracking-tight text-white mt-0.5">
@@ -163,7 +163,7 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="text-slate-300">Ledger:</span>
               <span className="text-emerald-400 font-mono font-medium">Synced</span>
               <span className="text-slate-600">|</span>
-              <span className="text-slate-300">SMS OTP:</span>
+              <span className="text-slate-300">SMS:</span>
               <span className={health?.smsGateway === 'HEALTHY' ? 'text-emerald-400' : 'text-amber-400'}>
                 {health?.smsGateway === 'HEALTHY' ? 'Live' : 'Not configured'}
               </span>

@@ -97,11 +97,11 @@ async function runTests() {
   assert(Boolean(otpStart.debug_otp), 'Secure 6-digit OTP generated in dev mode');
 
   // Verify wrong OTP fails
-  const badOtpVerify = VoterVerificationService.verifyOtp(otpStart.verification_id!, '000000');
+  const badOtpVerify = await VoterVerificationService.verifyOtp(otpStart.verification_id!, '000000');
   assert(badOtpVerify.verified === false, 'Incorrect OTP rejected with attempts decremented');
 
   // Verify correct OTP succeeds
-  const correctOtpVerify = VoterVerificationService.verifyOtp(otpStart.verification_id!, otpStart.debug_otp!);
+  const correctOtpVerify = await VoterVerificationService.verifyOtp(otpStart.verification_id!, otpStart.debug_otp!);
   assert(correctOtpVerify.verified === true, 'Correct OTP verified successfully');
 
   // Test direct SMS service
