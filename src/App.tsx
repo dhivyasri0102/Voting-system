@@ -16,7 +16,7 @@ import { AdminAuditDashboard } from './components/admin/AdminAuditDashboard.js';
 import { AdminSystemHealth } from './components/admin/AdminSystemHealth.js';
 
 // Voter Portal Components
-import { VoterDemoLogin } from './components/voter/VoterDemoLogin.js';
+import { VoterLogin } from './components/voter/VoterLogin.js';
 import { VoterLayout } from './components/voter/VoterLayout.js';
 import { VoterDashboard } from './components/voter/VoterDashboard.js';
 import { VoterCandidateSelect } from './components/voter/VoterCandidateSelect.js';
@@ -29,7 +29,6 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <VoiceGuidanceProvider>
-          <SeniorModeAssistant />
           <VoiceGuidanceBar />
           <Routes>
           {/* 1. Landing Page */}
@@ -54,7 +53,7 @@ export default function App() {
 
           {/* 4. Voter Authentication */}
           <Route path="/login" element={<Navigate to="/voter/login" replace />} />
-          <Route path="/voter/login" element={<VoterDemoLogin />} />
+          <Route path="/voter/login" element={<VoterLogin />} />
 
           {/* 5. Voter Protected Portal */}
           <Route path="/voter" element={<VoterLayout />}>

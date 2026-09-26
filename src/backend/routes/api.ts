@@ -1,4 +1,3 @@
-
 /**
  * Master REST API Router for National E-Voting Architecture
  * 
@@ -22,8 +21,11 @@ import { TallyService } from '../services/TallyService.js';
 import { AuditService } from '../services/AuditService.js';
 import { SecurityMonitoringService } from '../services/SecurityMonitoringService.js';
 import { AuthService } from '../services/AuthService.js';
+import { UIDAIConfiguration } from '../integrations/uidai/UIDAIConfiguration.js';
+import { UidaiGatewayService } from '../services/UidaiGatewayService.js';
 import { DataStoreService } from '../services/DataStoreService.js';
 import { SolidityBlockchainManager } from '../services/SolidityBlockchainManager.js';
+import { WebAuthnService } from '../services/WebAuthnService.js';
 
 const router = Router();
 
@@ -567,6 +569,72 @@ router.get('/voter/status/:voterId/:electionId', (req: Request, res: Response) =
 });
 
 // ==========================================
+// 6B. WEBAUTHN FINGERPRINT AUTHENTICATION
+// ==========================================
+
+/**
+ * POST /api/v1/webauthn/register/options
+ * Returns PublicKeyCredentialCreationOptions for registering device fingerprint
+ */
+router.post('/webauthn/register/options', (req: Request, res: Response) => {
+  const voterId = req.body.voter_id || req.body.voterId;
+  if (!voterId) {
+    return res.status(400).json({ success: false, message: 'Voter ID is required.' });
+  }
+
+  const rpId = req.hostname || 'localhost';
+  const result = WebAuthnService.generateRegistrationOptions(voterId, rpId);
+  return res.status(result.success ? 200 : 400).json(result);
+});
+
+/**
+ * POST /api/v1/webauthn/register/verify
+ * Verifies attestation and saves WebAuthn credential in voter record
+ */
+router.post('/webauthn/register/verify', (req: Request, res: Response) => {
+  const voterId = req.body.voter_id || req.body.voterId;
+  const credentialResponse = req.body.response;
+
+  if (!voterId || !credentialResponse) {
+    return res.status(400).json({ success: false, message: 'Voter ID and credential response are required.' });
+  }
+
+  const result = WebAuthnService.verifyRegistrationResponse(voterId, credentialResponse);
+  return res.status(result.success ? 200 : 400).json(result);
+});
+
+/**
+ * POST /api/v1/webauthn/login/options
+ * Returns PublicKeyCredentialRequestOptions for authenticating via fingerprint
+ */
+router.post('/webauthn/login/options', (req: Request, res: Response) => {
+  const voterId = req.body.voter_id || req.body.voterId;
+  if (!voterId) {
+    return res.status(400).json({ success: false, message: 'Voter ID is required.' });
+  }
+
+  const rpId = req.hostname || 'localhost';
+  const result = WebAuthnService.generateAuthenticationOptions(voterId, rpId);
+  return res.status(result.success ? 200 : 400).json(result);
+});
+
+/**
+ * POST /api/v1/webauthn/login/verify
+ * Verifies assertion, confirms biometric authentication, and issues anonymous voting token
+ */
+router.post('/webauthn/login/verify', (req: Request, res: Response) => {
+  const voterId = req.body.voter_id || req.body.voterId;
+  const authResponse = req.body.response;
+
+  if (!voterId || !authResponse) {
+    return res.status(400).json({ success: false, message: 'Voter ID and biometric authentication response are required.' });
+  }
+
+  const result = WebAuthnService.verifyAuthenticationResponse(voterId, authResponse);
+  return res.status(result.success ? 200 : 400).json(result);
+});
+
+// ==========================================
 // 7. LOCAL VOTER VERIFICATION & OTP ENDPOINTS
 // ==========================================
 
@@ -588,90 +656,20 @@ router.post(['/verification/voter-id', '/verification/voter-id/'], (req: Request
 });
 
 /**
- * POST /api/v1/auth/voter/demo-login
- * Voter-ID-only login for local demonstrations. Production requires real OTP authentication.
- */
-router.post('/auth/voter/demo-login', (req: Request, res: Response) => {
-  if (process.env.NODE_ENV === 'production') {
-    return res.status(403).json({
-      success: false,
-      message: 'Voter-ID-only login is disabled in production.',
-    });
-  }
-
-  const voterId = String(req.body.voter_id || '').trim().toUpperCase();
-  const voter = DataStoreService.getVoter(voterId);
-  if (!voter || voter.status !== 'ACTIVE') {
-    return res.status(401).json({
-      success: false,
-      message: 'Voter ID was not found or is inactive.',
-    });
-  }
-
-  if (DataStoreService.hasVoted(voterId)) {
-    return res.status(409).json({
-      success: false,
-      message: 'This voter has already voted.',
-    });
-  }
-
-  const election = DataStoreService.getElections().find((item) => item.status === 'OPEN');
-  if (!election) {
-    return res.status(409).json({
-      success: false,
-      message: 'There is no open election available for voting.',
-    });
-  }
-
-  const credential = AnonymousCredentialService.issueCredential(election.id);
-  const fullNameMasked = voter.fullName
-    .split(/\s+/)
-    .map((part) => part ? `${part[0]}${'*'.repeat(Math.max(1, part.length - 1))}` : part)
-    .join(' ');
-  const mobileMasked = voter.mobileNumber.length >= 4
-    ? voter.mobileNumber.slice(-4).padStart(voter.mobileNumber.length, '*')
-    : '****';
-
-  return res.json({
-    success: true,
-    authReference: `DEMO-${Date.now()}`,
-    voter: {
-      voterId: voter.voterId,
-      fullNameMasked,
-      constituency: voter.constituency,
-      state: voter.state,
-      mobileMasked,
-    },
-    electionId: election.id,
-    credential: {
-      raw: credential.rawCredential,
-      hash: credential.credentialHash,
-    },
-  });
-});
-
-/**
  * POST /api/v1/verification/otp/start/
  * POST /api/v1/verification/otp/start
  * Step 2: Generates a secure 6-digit OTP and dispatches it via SmsService.
  */
 router.post(['/verification/otp/start', '/verification/otp/start/'], async (req: Request, res: Response) => {
-  const { voter_id } = req.body;
-  const result = await VoterVerificationService.startOtp(voter_id);
+  const { voter_id, mobile_number } = req.body;
+  const result = await VoterVerificationService.startOtp(voter_id, mobile_number);
 
   if (!result.success) {
-    const statusCode = result.service_unavailable ? 503 : result.cooldown_seconds ? 429 : 400;
+    const statusCode = result.cooldown_seconds ? 429 : 400;
     return res.status(statusCode).json(result);
   }
 
-  return res.status(200).json({
-    success: true,
-    verification_id: result.verification_id,
-    mobile_masked: result.mobile_masked,
-    expires_in_seconds: result.expires_in_seconds,
-    provider: result.provider,
-    message: result.message,
-  });
+  return res.status(200).json(result);
 });
 
 /**
@@ -679,12 +677,12 @@ router.post(['/verification/otp/start', '/verification/otp/start/'], async (req:
  * POST /api/v1/verification/otp/verify
  * Step 3: Verifies the 6-digit OTP entered by the voter.
  */
-router.post(['/verification/otp/verify', '/verification/otp/verify/'], async (req: Request, res: Response) => {
+router.post(['/verification/otp/verify', '/verification/otp/verify/'], (req: Request, res: Response) => {
   const { verification_id, otp } = req.body;
-  const result = await VoterVerificationService.verifyOtp(verification_id, otp);
+  const result = VoterVerificationService.verifyOtp(verification_id, otp);
 
   if (!result.verified) {
-    const statusCode = result.service_unavailable ? 503 : result.blocked ? 429 : 400;
+    const statusCode = result.blocked ? 429 : 400;
     return res.status(statusCode).json(result);
   }
 
@@ -980,7 +978,52 @@ router.get('/metrics', (req: Request, res: Response) => {
 });
 
 // ==========================================
-// 10. VOTER VOTING HISTORY (BALLOT SECRECY PRESERVED)
+// 10. UIDAI OFFICIAL GATEWAY ENDPOINTS
+// ==========================================
+
+router.get('/verification/uidai/status', (req: Request, res: Response) => {
+  const status = UidaiGatewayService.getStatus();
+  res.json(status);
+});
+
+router.post(['/verification/uidai/otp/request', '/verification/aadhaar/otp/request'], async (req: Request, res: Response) => {
+  const { aadhaar_number, aadhaarNumber, user_consent, userConsent, voter_id, voterId } = req.body;
+  const ip = req.ip || '127.0.0.1';
+
+  const result = await UidaiGatewayService.requestOtp({
+    aadhaarNumber: aadhaar_number || aadhaarNumber,
+    userConsent: user_consent ?? userConsent ?? false,
+    voterId: voter_id || voterId,
+    ipAddress: ip,
+  });
+
+  return res.status(result.statusCode).json(result);
+});
+
+router.post(['/verification/uidai/otp/verify', '/verification/aadhaar/otp/verify'], async (req: Request, res: Response) => {
+  const { transaction_id, transactionId, otp } = req.body;
+  const ip = req.ip || '127.0.0.1';
+
+  const result = await UidaiGatewayService.verifyOtp({
+    transactionId: transaction_id || transactionId,
+    otp,
+    ipAddress: ip,
+  });
+
+  return res.status(result.statusCode).json(result);
+});
+
+router.post('/verification/uidai/authenticate', async (req: Request, res: Response) => {
+  const { auth_reference, authReference, voter_id, voterId } = req.body;
+  const result = await UidaiGatewayService.authenticate({
+    authReference: auth_reference || authReference,
+    voterId: voter_id || voterId,
+  });
+  return res.json(result);
+});
+
+// ==========================================
+// 11. VOTER VOTING HISTORY (BALLOT SECRECY PRESERVED)
 // ==========================================
 
 router.get('/voter/history/:voterId', (req: Request, res: Response) => {
@@ -1039,7 +1082,7 @@ router.get('/admin/votes', (req: Request, res: Response) => {
   }
 
   const voteBlocks = blocks.map((b) => {
-    const tx = b.transactions[0] || {} as any;
+    const tx = b.transactions[0] || ({} as any);
     const candidateId = ballotMap.get(tx.ballotCommitment) || 'CAND-01';
     return {
       blockIndex: b.index,
@@ -1064,37 +1107,41 @@ router.get('/admin/votes', (req: Request, res: Response) => {
     blocks: voteBlocks,
   });
 });
-// 11. Legacy local OTP simulator endpoints
+
+// ==========================================
+// 12. MOBILE OTP ALIAS ENDPOINTS (Free-Tier SMS)
 // ==========================================
 
 /**
  * POST /api/v1/verification/send-otp
  * Mobile number OTP dispatch (alias for /verification/otp/start)
- * Sends no SMS; retained for legacy development tests only.
+ * Supports Twilio free-tier and Fast2SMS free-tier
  */
 router.post('/verification/send-otp', async (req: Request, res: Response) => {
-  const { voter_id } = req.body;
+  const { phone, voter_id } = req.body;
 
-  if (!voter_id) {
+  if (!phone || !voter_id) {
     return res.status(400).json({
       success: false,
-      message: 'Voter ID is required.',
+      message: 'Mobile number and voter ID are required.',
+    });
+  }
+
+  const cleanPhone = phone.replace(/\D/g, '');
+  if (!/^[6-9]\d{9}$/.test(cleanPhone)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid Indian mobile number. Must be 10 digits starting with 6-9.',
     });
   }
 
   try {
-    const result = await VoterVerificationService.startOtp(voter_id);
+    const result = await VoterVerificationService.startOtp(voter_id, cleanPhone);
     if (!result.success) {
-      const statusCode = result.service_unavailable ? 503 : result.cooldown_seconds ? 429 : 400;
-      return res.status(statusCode).json(result);
+      return res.status(result.cooldown_seconds ? 429 : 400).json(result);
     }
     return res.status(200).json({
-      success: true,
-      verification_id: result.verification_id,
-      mobile_masked: result.mobile_masked,
-      expires_in_seconds: result.expires_in_seconds,
-      provider: result.provider,
-      message: result.message,
+      ...result,
       transactionId: result.verification_id || ('TXN-' + Date.now()),
     });
   } catch {
@@ -1110,7 +1157,7 @@ router.post('/verification/send-otp', async (req: Request, res: Response) => {
  * Mobile OTP verification (alias for /verification/otp/verify)
  * Returns anonymous voting credential on success
  */
-router.post('/verification/verify-otp', async (req: Request, res: Response) => {
+router.post('/verification/verify-otp', (req: Request, res: Response) => {
   const { transaction_id, otp, voter_id } = req.body;
 
   if (!transaction_id || !otp) {
@@ -1127,10 +1174,9 @@ router.post('/verification/verify-otp', async (req: Request, res: Response) => {
     });
   }
 
-  const result = await VoterVerificationService.verifyOtp(transaction_id, otp);
+  const result = VoterVerificationService.verifyOtp(transaction_id, otp);
   if (!result.verified) {
-    const statusCode = result.service_unavailable ? 503 : result.blocked ? 429 : 400;
-    return res.status(statusCode).json({
+    return res.status(result.blocked ? 429 : 400).json({
       ...result,
       success: false,
     });

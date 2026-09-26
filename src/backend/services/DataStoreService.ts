@@ -13,11 +13,17 @@ import { Election, Candidate, VotingCredential, BlockchainBlock } from '../../ty
 export interface RegisteredVoter {
   voterId: string;       // EPIC Number (e.g. TNL1029384)
   fullName: string;
-  mobileNumber: string;  // Retained for voter records; demo login does not send SMS
+  mobileNumber?: string;  // Optional
   constituency: string;
   state: string;
   status: 'ACTIVE' | 'INACTIVE';
   registeredAt: string;
+  // WebAuthn Passkey biometric credential attributes
+  hasWebAuthn?: boolean;
+  webauthnCredentialId?: string;      // Base64URL string of credential ID
+  webauthnPublicKey?: string;         // Base64URL or string representation of public key
+  webauthnSignCount?: number;         // Counter for replay attack protection
+  webauthnRegisteredAt?: string;
 }
 
 export interface StoreSchema {
@@ -113,6 +119,21 @@ export class DataStoreService {
     });
     this.save();
     return { success: true, message: `Voter ${voter.fullName} successfully registered with EPIC ${cleanId}.` };
+  }
+
+  public static updateVoterWebAuthn(voterId: string, credentialId: string, publicKey: string): boolean {
+    this.initialize();
+    const cleanId = voterId.trim().toUpperCase();
+    const voter = this.store.voters.find((v) => v.voterId.toUpperCase() === cleanId);
+    if (!voter) return false;
+
+    voter.hasWebAuthn = true;
+    voter.webauthnCredentialId = credentialId;
+    voter.webauthnPublicKey = publicKey;
+    voter.webauthnSignCount = 0;
+    voter.webauthnRegisteredAt = new Date().toISOString();
+    this.save();
+    return true;
   }
 
   // --- Electoral Roll Voted Flags ---

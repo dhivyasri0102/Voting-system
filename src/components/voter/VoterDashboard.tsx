@@ -5,11 +5,13 @@ import {
   ArrowRight, UserCheck, Lock, ExternalLink, RefreshCw
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.js';
+import { useVoiceGuidance } from '../VoiceGuidance.js';
 import { Election } from '../../types/index.js';
 
 export const VoterDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { voterSession, accessibility } = useAuth();
+  const vg = useVoiceGuidance();
   const isTamil = accessibility.language === 'ta';
 
   const [elections, setElections] = useState<Election[]>([]);
@@ -44,6 +46,36 @@ export const VoterDashboard: React.FC = () => {
   }, [voterSession?.voterId]);
 
   const hasVoted = voterSession?.hasVoted || voterStatus?.has_voted;
+
+  // Voice Guidance: auto-speak and register commands
+  useEffect(() => {
+    if (!vg.voiceOn) return;
+
+    if (hasVoted) {
+      vg.speakCustom('Ungaloda vote already record aayiduchu. Status paarka Next nu sollunga.');
+    } else {
+      vg.speak('DASHBOARD');
+    }
+
+    vg.registerCommandHandler((cmd) => {
+      if (cmd === 'REPEAT') {
+        vg.repeat();
+        return;
+      }
+      if (cmd === 'NEXT' || cmd === 'CONFIRM') {
+        if (hasVoted) {
+          navigate('/voter/status');
+        } else if (elections.length > 0) {
+          const targetElection = elections.find((e) => e.status === 'OPEN') || elections[0];
+          navigate(`/voter/election/${targetElection.id}/candidates`);
+        }
+      }
+    });
+
+    return () => {
+      vg.unregisterCommandHandler();
+    };
+  }, [hasVoted, elections, vg.voiceOn, navigate]);
 
   return (
     <div className="space-y-6">

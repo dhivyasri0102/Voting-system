@@ -1,14 +1,14 @@
 /**
  * VoiceGuidance.tsx
  * ─────────────────────────────────────────────────────────────────────────────
- * Provides step-by-step voice guidance for the entire e-voting flow.
+ * Tanglish Voice Assistant & Continuous Speech Engine for E-Voting Flow.
  *
- * • Language modes : EN | TANGLISH | BOTH
- * • Senior-friendly: slow speech rate (0.78)
- * • Voice commands : "next", "back", "repeat", "select candidate 1/2/3"
- * • DOES NOT bypass : OTP, eligibility, confirmation, backend, blockchain
- * • DOES NOT store  : voice recordings (Web Speech API is browser-local)
- * • No Tamil Unicode: all Tanglish messages use plain English letters
+ * • 100% Tanglish Tamil (plain English phonetics for browser SpeechSynthesis)
+ * • Zero Tamil Unicode in TTS output for crystal-clear Indian English synthesis
+ * • Automatic Speak → Listen → Understand → Execute → Next Step loop
+ * • Auto-restarting continuous speech recognition without requiring mic taps
+ * • Fully respects OTP, eligibility, token, confirmation, and blockchain validation
+ * • Browser-local only — zero audio storage
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
@@ -20,129 +20,193 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { Mic, MicOff, Volume2, VolumeX, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
+import { Volume2, VolumeX, Mic } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export type VoiceLang = 'EN' | 'TANGLISH' | 'BOTH';
-
 export type VotingStep =
+  | 'LANDING'
   | 'VOTER_ID'
-  | 'PHONE'
+  | 'AADHAAR'
   | 'OTP'
+  | 'FINGERPRINT_REGISTER'
+  | 'FINGERPRINT_AUTH'
   | 'ELIGIBILITY'
   | 'CREDENTIAL'
+  | 'DASHBOARD'
   | 'CANDIDATE_SELECT'
   | 'CONFIRMATION'
   | 'SUBMITTING'
   | 'SUCCESS'
   | 'IDLE';
 
-interface StepMessage {
-  en: string;
-  tanglish: string;
-}
+// ─── All step messages (100% Pure Tanglish — NO Tamil Unicode) ───────────────
 
-// ─── All step messages (NO Tamil Unicode anywhere) ────────────────────────────
-
-const STEP_MESSAGES: Record<VotingStep, StepMessage> = {
-  VOTER_ID: {
-    en: 'Please enter your Voter ID.',
-    tanglish: 'Ungaloda Voter ID-ai enter pannunga.',
-  },
-  PHONE: {
-    en: 'Please enter your registered mobile number and give your consent.',
-    tanglish: 'Ungaloda registered mobile number-ai enter pannunga, consent-ai confirm pannunga.',
-  },
-  OTP: {
-    en: 'Please enter the OTP sent to your registered mobile number.',
-    tanglish: 'Ungaluku OTP anupapattirukku. OTP-ai enter pannunga.',
-  },
-  ELIGIBILITY: {
-    en: 'Your eligibility is being verified. Please wait.',
-    tanglish: 'Ungaloda voting eligibility verify pannitu irukku. Konjam wait pannunga.',
-  },
-  CREDENTIAL: {
-    en: 'Your identity is verified. A secure voting credential is being issued.',
-    tanglish:
-      'Ungaloda identity verify aayiduchu. Secure voting credential issue pannitu irukku.',
-  },
-  CANDIDATE_SELECT: {
-    en: 'Please select the candidate you want to vote for. Candidate name and party symbol are displayed on the screen.',
-    tanglish:
-      'Neenga vote panna virumbura candidate-ai select pannunga. Candidate name-um party symbol-um screen-la display aagum.',
-  },
-  CONFIRMATION: {
-    en: 'Please check your selected candidate and confirm your vote. Warning: your vote cannot be changed after submission.',
-    tanglish:
-      'Neenga select panna candidate-ai check panni vote-ai confirm pannunga. Warning: Vote submit pannina apram atha change panna mudiyathu.',
-  },
-  SUBMITTING: {
-    en: 'Your vote is being recorded on the blockchain. Please do not close this page.',
-    tanglish:
-      'Ungaloda vote blockchain-la record pannitu irukku. Page-ai close pannatheenga.',
-  },
-  SUCCESS: {
-    en: 'Your vote has been successfully recorded. Thank you for voting.',
-    tanglish:
-      'Ungaloda vote successfully record aayiduchu. Vote pannathukku nandri.',
-  },
-  IDLE: {
-    en: '',
-    tanglish: '',
-  },
+export const STEP_MESSAGES: Record<VotingStep, string> = {
+  LANDING:
+    'Voice assistant activate aayiduchu. National E-Voting Portal. Citizen Voter Login-ku poga Next nu sollunga.',
+  VOTER_ID:
+    'Ungaloda Voter ID-ai enter pannunga. Apram Next nu sollunga.',
+  AADHAAR:
+    'Ungaloda mobile number-ai enter panni, consent-ai confirm pannunga. Apram Next nu sollunga.',
+  OTP:
+    'Ungaluku OTP anupapattirukku. OTP-ai enter pannunga. Apram Confirm nu sollunga.',
+  FINGERPRINT_REGISTER:
+    'Ungaloda Voter ID verify aayiduchu. Fingerprint register panna Register Fingerprint button-ai click pannunga, illa Fingerprint nu sollunga.',
+  FINGERPRINT_AUTH:
+    'Ungaloda Voter ID verify aayiduchu. Fingerprint verify panna sensor-la viral veinga, illa Authenticate nu sollunga.',
+  ELIGIBILITY:
+    'Ungaloda voting eligibility verify pannitu irukku. Konjam wait pannunga.',
+  CREDENTIAL:
+    'Ungaloda identity verify aayiduchu. Secure voting credential issue pannitu irukku. Next nu sollunga.',
+  DASHBOARD:
+    'Voter dashboard. Vote panna election-ai choose panni, Next nu sollunga.',
+  CANDIDATE_SELECT:
+    'Vote panna candidate-ai select pannunga. Candidate name-um party symbol-um screen-la irukku. Select candidate one, two, illa three nu sollunga. Apram Next nu sollunga.',
+  CONFIRMATION:
+    'Ungaloda selection-ai check pannunga. Vote submit panna Confirm nu sollunga. Candidate-ai maatha Back nu sollunga.',
+  SUBMITTING:
+    'Ungaloda vote blockchain-la record pannitu irukku. Page-ai close pannatheenga.',
+  SUCCESS:
+    'Ungaloda vote successfully record aayiduchu. Cryptographic receipt screen-la display aagiduchu. Vote pannadhukku nandri.',
+  IDLE: '',
 };
 
-// ─── Build the spoken text based on language mode ────────────────────────────
+// ─── Command Normalizer (English + Tanglish) ──────────────────────────────────
 
-function buildText(step: VotingStep, lang: VoiceLang): string {
-  const msg = STEP_MESSAGES[step];
-  if (!msg.en && !msg.tanglish) return '';
-  switch (lang) {
-    case 'EN':
-      return msg.en;
-    case 'TANGLISH':
-      return msg.tanglish;
-    case 'BOTH':
-      // Say English first, then Tanglish — natural pause between them
-      return msg.en + (msg.tanglish ? '  ... ' + msg.tanglish : '');
+export function normalizeVoiceCommand(raw: string): string {
+  const t = raw
+    .toLowerCase()
+    .replace(/[.,/#!$%^&*;:{}=\-_`~()?"']/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  // Select Candidate 1..5 (checked first)
+  if (
+    /\b(select candidate (one|1)|candidate (one|1)|first candidate|number (one|1)|mutha candidate|onnu|first|number 1)\b/.test(
+      t
+    ) || t === '1' || t === 'one' || t === 'onnu'
+  ) {
+    return 'SELECT_1';
   }
+
+  if (
+    /\b(select candidate (two|2)|candidate (two|2)|second candidate|number (two|2)|rendavathu candidate|rendu|second|number 2)\b/.test(
+      t
+    ) || t === '2' || t === 'two' || t === 'rendu'
+  ) {
+    return 'SELECT_2';
+  }
+
+  if (
+    /\b(select candidate (three|3)|candidate (three|3)|third candidate|number (three|3)|moonavathu candidate|moonu|third|number 3)\b/.test(
+      t
+    ) || t === '3' || t === 'three' || t === 'moonu'
+  ) {
+    return 'SELECT_3';
+  }
+
+  if (
+    /\b(select candidate (four|4)|candidate (four|4)|fourth candidate|number (four|4)|naalu|naangu|four|fourth|number 4)\b/.test(
+      t
+    ) || t === '4' || t === 'four' || t === 'naalu'
+  ) {
+    return 'SELECT_4';
+  }
+
+  if (
+    /\b(select candidate (five|5)|candidate (five|5)|fifth candidate|number (five|5)|ainthavathu candidate|anju|aindhu|five|fifth|number 5)\b/.test(
+      t
+    ) || t === '5' || t === 'five' || t === 'anju'
+  ) {
+    return 'SELECT_5';
+  }
+
+  // Next / Continue / Proceed
+  if (
+    /\b(next|continue|proceed|forward|munaadi|munaadi po|munnadi|munnadi po|aduthu|aaduthu|nextu|next page|ponga|go|polam|vaanga)\b/.test(
+      t
+    )
+  ) {
+    return 'NEXT';
+  }
+
+  // Back / Previous / Change
+  if (
+    /\b(back|previous|thirumbi|thirumbi po|piragu|pinnadi|pinnadi po|go back|change|maathu|maatha|thirumba)\b/.test(
+      t
+    )
+  ) {
+    return 'BACK';
+  }
+
+  // Repeat / Again
+  if (
+    /\b(repeat|again|marubadi|marubadi sollu|marubadiyum|marupadi|sollu|mela sollu|once more|oru murai|pesu|puriyala|kekkala)\b/.test(
+      t
+    )
+  ) {
+    return 'REPEAT';
+  }
+
+  // Confirm / Submit / Vote
+  if (
+    /\b(confirm|confirm pannunga|submit|yes confirm|vote|seri|yes|ok|okk|sure|aama|aam|podu|kudu|panre)\b/.test(
+      t
+    )
+  ) {
+    return 'CONFIRM';
+  }
+
+  // Fingerprint / Biometric / Register / Authenticate
+  if (
+    /\b(fingerprint|biometric|kairegai|kai regai|viral|sensor|finger print)\b/.test(
+      t
+    )
+  ) {
+    return 'FINGERPRINT';
+  }
+
+  if (
+    /\b(register|register fingerprint|register pannu|pathivu|pathivu sei)\b/.test(
+      t
+    )
+  ) {
+    return 'REGISTER';
+  }
+
+  if (
+    /\b(authenticate|verify|auth|saripaaru|login|ulnuzhai)\b/.test(
+      t
+    )
+  ) {
+    return 'AUTHENTICATE';
+  }
+
+  // Cancel / Stop
+  if (/\b(cancel|stop|vendam|exit|close|mudi|niruthu)\b/.test(t)) {
+    return 'CANCEL';
+  }
+
+  return '';
 }
 
 // ─── Context ──────────────────────────────────────────────────────────────────
 
+export type CommandHandler = (cmd: string, rawText?: string) => void;
+
 interface VoiceGuidanceCtx {
   voiceOn: boolean;
-  lang: VoiceLang;
-  setLang: (l: VoiceLang) => void;
   toggleVoice: () => void;
-  speak: (step: VotingStep) => void;
-  speakCustom: (text: string) => void;
+  speak: (step: VotingStep, customSuffix?: string) => void;
+  speakCustom: (text: string, onEnd?: () => void) => void;
   repeat: () => void;
   stop: () => void;
   isSpeaking: boolean;
   isListening: boolean;
-  startListening: () => void;
-  stopListening: () => void;
   lastTranscript: string;
-  /** Register a callback to handle voice commands on the current page */
   registerCommandHandler: (fn: CommandHandler) => void;
   unregisterCommandHandler: () => void;
-}
-
-type CommandHandler = (cmd: string) => void;
-
-interface BrowserSpeechRecognition {
-  lang: string;
-  interimResults: boolean;
-  maxAlternatives: number;
-  continuous: boolean;
-  onstart: (() => void) | null;
-  onend: (() => void) | null;
-  onerror: (() => void) | null;
-  onresult: ((event: SpeechRecognitionEvent) => void) | null;
-  start: () => void;
-  stop: () => void;
 }
 
 const VoiceGuidanceContext = createContext<VoiceGuidanceCtx | null>(null);
@@ -160,128 +224,274 @@ export const VoiceGuidanceProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   });
 
-  const [lang, setLangState] = useState<VoiceLang>(() => {
-    try {
-      return (localStorage.getItem('vg_lang') as VoiceLang) || 'BOTH';
-    } catch {
-      return 'BOTH';
-    }
-  });
-
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [lastTranscript, setLastTranscript] = useState('');
 
+  const voiceOnRef = useRef(voiceOn);
+  const isSpeakingRef = useRef(false);
   const lastTextRef = useRef('');
-  const recognitionRef = useRef<BrowserSpeechRecognition | null>(null);
+  const activeUttRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const recognitionRef = useRef<any>(null);
   const commandHandlerRef = useRef<CommandHandler | null>(null);
+  const restartTimerRef = useRef<any>(null);
+  const cachedVoicesRef = useRef<SpeechSynthesisVoice[]>([]);
 
-  // Persist prefs
-  const setLang = useCallback((l: VoiceLang) => {
-    setLangState(l);
-    try { localStorage.setItem('vg_lang', l); } catch {}
+  useEffect(() => {
+    voiceOnRef.current = voiceOn;
+  }, [voiceOn]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      const loadVoices = () => {
+        try {
+          const vs = window.speechSynthesis.getVoices();
+          if (vs && vs.length > 0) {
+            cachedVoicesRef.current = vs;
+          }
+        } catch {}
+      };
+      loadVoices();
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
   }, []);
 
-  const toggleVoice = useCallback(() => {
-    setVoiceOn((prev) => {
-      const next = !prev;
-      try { localStorage.setItem('vg_voice_on', String(next)); } catch {}
-      if (!next) window.speechSynthesis?.cancel();
-      return next;
-    });
+  const stopListeningRef = useRef<() => void>(() => {});
+  const startListeningRef = useRef<() => void>(() => {});
+  const speakCustomRef = useRef<(text: string, onEnd?: () => void) => void>(() => {});
+
+  // ── Speech Recognition Engine ───────────────────────────────────────────────
+  const stopListening = useCallback(() => {
+    if (restartTimerRef.current) {
+      clearTimeout(restartTimerRef.current);
+      restartTimerRef.current = null;
+    }
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch {}
+      recognitionRef.current = null;
+    }
+    setIsListening(false);
   }, []);
-
-  // ── Core speak ──────────────────────────────────────────────────────────────
-  const speakRaw = useCallback(
-    (text: string) => {
-      if (!voiceOn || !text || !('speechSynthesis' in window)) return;
-      lastTextRef.current = text;
-      window.speechSynthesis.cancel();
-
-      const utt = new SpeechSynthesisUtterance(text);
-      // Always use en-IN so Tanglish is read in English phonetics by the engine
-      utt.lang = 'en-IN';
-      utt.rate = 0.78;   // senior-friendly slow
-      utt.pitch = 1.05;
-      utt.volume = 1;
-
-      utt.onstart = () => setIsSpeaking(true);
-      utt.onend = () => setIsSpeaking(false);
-      utt.onerror = () => setIsSpeaking(false);
-
-      // Small delay lets the browser finish any previous cancel()
-      setTimeout(() => window.speechSynthesis.speak(utt), 120);
-    },
-    [voiceOn]
-  );
-
-  const speak = useCallback(
-    (step: VotingStep) => {
-      const text = buildText(step, lang);
-      speakRaw(text);
-    },
-    [lang, speakRaw]
-  );
-
-  const speakCustom = useCallback(
-    (text: string) => speakRaw(text),
-    [speakRaw]
-  );
-
-  const repeat = useCallback(() => {
-    if (lastTextRef.current) speakRaw(lastTextRef.current);
-  }, [speakRaw]);
-
-  const stop = useCallback(() => {
-    window.speechSynthesis?.cancel();
-    setIsSpeaking(false);
-  }, []);
-
-  // ── Voice commands ──────────────────────────────────────────────────────────
-  const handleRecognitionResult = useCallback(
-    (raw: string) => {
-      const text = raw.toLowerCase().trim();
-      setLastTranscript(raw);
-
-      // Forward to page-specific handler first
-      if (commandHandlerRef.current) {
-        commandHandlerRef.current(text);
-        return;
-      }
-    },
-    []
-  );
+  stopListeningRef.current = stopListening;
 
   const startListening = useCallback(() => {
+    if (!voiceOnRef.current || isSpeakingRef.current || typeof window === 'undefined') {
+      return;
+    }
+
     const SR =
       (window as any).SpeechRecognition ||
       (window as any).webkitSpeechRecognition;
-    if (!SR) return;
+    if (!SR) {
+      return;
+    }
 
-    stop(); // stop speaking before listening
-    const rec = new SR() as BrowserSpeechRecognition;
-    recognitionRef.current = rec;
-    rec.lang = 'en-IN';
-    rec.interimResults = false;
-    rec.maxAlternatives = 3;
-    rec.continuous = false;
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch {}
+      recognitionRef.current = null;
+    }
 
-    rec.onstart = () => setIsListening(true);
-    rec.onend = () => setIsListening(false);
-    rec.onerror = () => setIsListening(false);
-    rec.onresult = (e: SpeechRecognitionEvent) => {
-      const said = Array.from(e.results[0])
-        .map((r) => r.transcript)
-        .join(' ');
-      handleRecognitionResult(said);
-    };
-    rec.start();
-  }, [stop, handleRecognitionResult]);
+    try {
+      const rec = new SR();
+      recognitionRef.current = rec;
+      rec.lang = 'en-IN';
+      rec.interimResults = false;
+      rec.maxAlternatives = 3;
+      rec.continuous = false;
 
-  const stopListening = useCallback(() => {
-    recognitionRef.current?.stop();
-    setIsListening(false);
+      rec.onstart = () => {
+        setIsListening(true);
+      };
+
+      rec.onresult = (e: any) => {
+        let text = '';
+        if (e.results && e.results.length > 0) {
+          const lastRes = e.results[e.results.length - 1];
+          if (lastRes && lastRes[0]) {
+            text = lastRes[0].transcript;
+          }
+        }
+        if (!text && e.results[0] && e.results[0][0]) {
+          text = e.results[0][0].transcript;
+        }
+
+        if (text) {
+          const cleaned = text.trim();
+          setLastTranscript(cleaned);
+          const cmd = normalizeVoiceCommand(cleaned);
+
+          if (cmd === 'REPEAT') {
+            if (lastTextRef.current) {
+              speakCustomRef.current(lastTextRef.current);
+            }
+            return;
+          }
+
+          if (commandHandlerRef.current) {
+            commandHandlerRef.current(cmd, cleaned);
+          }
+        }
+      };
+
+      rec.onerror = (e: any) => {
+        setIsListening(false);
+      };
+
+      rec.onend = () => {
+        setIsListening(false);
+        // Automatically restart listening if Voice is active and not speaking
+        if (voiceOnRef.current && !isSpeakingRef.current) {
+          if (restartTimerRef.current) clearTimeout(restartTimerRef.current);
+          restartTimerRef.current = setTimeout(() => {
+            if (voiceOnRef.current && !isSpeakingRef.current) {
+              startListeningRef.current();
+            }
+          }, 350);
+        }
+      };
+
+      rec.start();
+    } catch (err) {
+      setIsListening(false);
+    }
   }, []);
+  startListeningRef.current = startListening;
+
+  // ── Speech Synthesis Engine ─────────────────────────────────────────────────
+  const speakCustom = useCallback((text: string, onEnd?: () => void) => {
+    if (!text || typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      onEnd?.();
+      return;
+    }
+
+    lastTextRef.current = text;
+    stopListeningRef.current(); // Pause listening while speaking to avoid feedback loop
+
+    try {
+      window.speechSynthesis.cancel();
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
+    } catch {}
+
+    const utt = new SpeechSynthesisUtterance(text);
+    activeUttRef.current = utt; // Prevent V8 garbage collection
+
+    // Best voice selection (en-IN or Indian English)
+    try {
+      const liveVoices = window.speechSynthesis.getVoices();
+      const voices = liveVoices && liveVoices.length > 0 ? liveVoices : cachedVoicesRef.current;
+      if (voices && voices.length > 0) {
+        const match =
+          voices.find((v) => v.lang.toLowerCase().startsWith('en-in')) ||
+          voices.find((v) => v.lang.toLowerCase().startsWith('en'));
+        if (match) utt.voice = match;
+      }
+    } catch {}
+
+    utt.lang = 'en-IN';
+    utt.rate = 0.82; // Clear, senior-friendly pacing
+    utt.pitch = 1.0;
+    utt.volume = 1;
+
+    isSpeakingRef.current = true;
+    setIsSpeaking(true);
+
+    utt.onstart = () => {
+      isSpeakingRef.current = true;
+      setIsSpeaking(true);
+    };
+
+    utt.onend = () => {
+      isSpeakingRef.current = false;
+      setIsSpeaking(false);
+      activeUttRef.current = null;
+      onEnd?.();
+
+      // Automatically start listening after instruction finishes speaking
+      if (voiceOnRef.current) {
+        setTimeout(() => {
+          startListeningRef.current();
+        }, 250);
+      }
+    };
+
+    utt.onerror = (e) => {
+      console.warn('VoiceGuidance utterance error:', e);
+      isSpeakingRef.current = false;
+      setIsSpeaking(false);
+      activeUttRef.current = null;
+      onEnd?.();
+
+      if (voiceOnRef.current) {
+        setTimeout(() => {
+          startListeningRef.current();
+        }, 250);
+      }
+    };
+
+    setTimeout(() => {
+      try {
+        if (window.speechSynthesis.paused) {
+          window.speechSynthesis.resume();
+        }
+        window.speechSynthesis.speak(utt);
+      } catch (err) {
+        console.warn('Speech synthesis speak error:', err);
+        isSpeakingRef.current = false;
+        setIsSpeaking(false);
+      }
+    }, 60);
+  }, []);
+  speakCustomRef.current = speakCustom;
+
+  const speak = useCallback((step: VotingStep, customSuffix = '') => {
+    if (!voiceOnRef.current) return;
+    const baseMsg = STEP_MESSAGES[step] || '';
+    const fullText = customSuffix ? `${baseMsg} ${customSuffix}`.trim() : baseMsg;
+    if (fullText) {
+      speakCustomRef.current(fullText);
+    }
+  }, []);
+
+  const repeat = useCallback(() => {
+    if (lastTextRef.current) {
+      speakCustomRef.current(lastTextRef.current);
+    }
+  }, []);
+
+  const stop = useCallback(() => {
+    window.speechSynthesis?.cancel();
+    activeUttRef.current = null;
+    isSpeakingRef.current = false;
+    setIsSpeaking(false);
+    stopListeningRef.current();
+  }, []);
+
+  const toggleVoice = useCallback(() => {
+    try {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.resume();
+      }
+    } catch {}
+
+    setVoiceOn((prev) => {
+      const next = !prev;
+      voiceOnRef.current = next;
+      try {
+        localStorage.setItem('vg_voice_on', String(next));
+      } catch {}
+
+      if (!next) {
+        stop();
+      }
+      return next;
+    });
+  }, [stop]);
 
   const registerCommandHandler = useCallback((fn: CommandHandler) => {
     commandHandlerRef.current = fn;
@@ -291,26 +501,37 @@ export const VoiceGuidanceProvider: React.FC<{ children: React.ReactNode }> = ({
     commandHandlerRef.current = null;
   }, []);
 
+  const contextValue = React.useMemo<VoiceGuidanceCtx>(
+    () => ({
+      voiceOn,
+      toggleVoice,
+      speak,
+      speakCustom,
+      repeat,
+      stop,
+      isSpeaking,
+      isListening,
+      lastTranscript,
+      registerCommandHandler,
+      unregisterCommandHandler,
+    }),
+    [
+      voiceOn,
+      toggleVoice,
+      speak,
+      speakCustom,
+      repeat,
+      stop,
+      isSpeaking,
+      isListening,
+      lastTranscript,
+      registerCommandHandler,
+      unregisterCommandHandler,
+    ]
+  );
+
   return (
-    <VoiceGuidanceContext.Provider
-      value={{
-        voiceOn,
-        lang,
-        setLang,
-        toggleVoice,
-        speak,
-        speakCustom,
-        repeat,
-        stop,
-        isSpeaking,
-        isListening,
-        startListening,
-        stopListening,
-        lastTranscript,
-        registerCommandHandler,
-        unregisterCommandHandler,
-      }}
-    >
+    <VoiceGuidanceContext.Provider value={contextValue}>
       {children}
     </VoiceGuidanceContext.Provider>
   );
@@ -320,205 +541,153 @@ export const VoiceGuidanceProvider: React.FC<{ children: React.ReactNode }> = ({
 
 export function useVoiceGuidance() {
   const ctx = useContext(VoiceGuidanceContext);
-  if (!ctx) throw new Error('useVoiceGuidance must be inside VoiceGuidanceProvider');
+  if (!ctx) {
+    throw new Error('useVoiceGuidance must be inside VoiceGuidanceProvider');
+  }
   return ctx;
 }
 
 /**
- * useStepVoice — convenience hook for voting-step components.
- * Call it with the current step and it auto-speaks on mount.
- * Also registers voice commands: next, back, repeat.
+ * useStepVoice — convenience hook for voting steps.
+ * Automatically speaks the Tanglish instruction on mount, then automatically listens.
  */
 export function useStepVoice(
   step: VotingStep,
   opts?: {
+    customSuffix?: string;
     onNext?: () => void;
     onBack?: () => void;
-    /** extra commands: { 'select candidate 1': fn, ... } */
+    onConfirm?: () => void;
     extraCommands?: Record<string, () => void>;
   }
 ) {
   const vg = useVoiceGuidance();
 
-  // Speak on mount (with a small delay so page renders first)
+  // Speak step instruction on mount
   useEffect(() => {
     if (!vg.voiceOn || step === 'IDLE') return;
-    const t = setTimeout(() => vg.speak(step), 700);
+    const t = setTimeout(() => {
+      vg.speak(step, opts?.customSuffix);
+    }, 450);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, vg.voiceOn, vg.lang]);
+  }, [step, vg.voiceOn]);
 
-  // Register command handler
+  // Register command routing
   useEffect(() => {
     vg.registerCommandHandler((cmd) => {
-      if (cmd.includes('repeat') || cmd.includes('again')) {
+      if (cmd === 'REPEAT') {
         vg.repeat();
         return;
       }
-      if ((cmd.includes('next') || cmd.includes('proceed')) && opts?.onNext) {
+      if (cmd === 'NEXT' && opts?.onNext) {
         opts.onNext();
         return;
       }
-      if ((cmd.includes('back') || cmd.includes('previous')) && opts?.onBack) {
+      if (cmd === 'BACK' && opts?.onBack) {
         opts.onBack();
         return;
       }
-      if (opts?.extraCommands) {
-        for (const [key, action] of Object.entries(opts.extraCommands)) {
-          if (cmd.includes(key)) {
-            action();
-            return;
-          }
-        }
+      if (cmd === 'CONFIRM' && opts?.onConfirm) {
+        opts.onConfirm();
+        return;
+      }
+      if (opts?.extraCommands && opts.extraCommands[cmd]) {
+        opts.extraCommands[cmd]();
+        return;
       }
     });
-    return () => vg.unregisterCommandHandler();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [vg, opts?.onNext, opts?.onBack]);
+
+    return () => {
+      vg.unregisterCommandHandler();
+    };
+  }, [vg, opts?.onNext, opts?.onBack, opts?.onConfirm, opts?.extraCommands]);
 }
 
-// ─── Floating Control Bar (renders on every page) ─────────────────────────────
+// ─── Floating Single Voice Assistant Bar ─────────────────────────────────────
 
 export const VoiceGuidanceBar: React.FC = () => {
   const vg = useVoiceGuidance();
-  const [expanded, setExpanded] = useState(false);
+  const [hasSpeechSupport, setHasSpeechSupport] = useState(true);
 
-  const langLabels: Record<VoiceLang, string> = {
-    EN: 'English',
-    TANGLISH: 'Tanglish',
-    BOTH: 'EN + TG',
-  };
-  const langCycle: VoiceLang[] = ['EN', 'TANGLISH', 'BOTH'];
-
-  const cycleLanguage = () => {
-    const idx = langCycle.indexOf(vg.lang);
-    vg.setLang(langCycle[(idx + 1) % langCycle.length]);
-  };
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (!SR) {
+        setHasSpeechSupport(false);
+      }
+    }
+  }, []);
 
   return (
     <div
-      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2"
+      className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2"
       style={{ pointerEvents: 'none' }}
     >
-      {/* ── Expanded panel ── */}
-      {expanded && vg.voiceOn && (
-        <div
-          className="bg-slate-900 border border-blue-500 rounded-2xl shadow-2xl px-4 py-3 flex flex-col gap-3 w-72"
-          style={{ pointerEvents: 'auto' }}
-        >
-          {/* Language selector */}
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-400 font-semibold uppercase tracking-widest">
-              Language
-            </span>
-            <button
-              onClick={cycleLanguage}
-              className="px-3 py-1 rounded-lg bg-blue-700 hover:bg-blue-600 text-white text-xs font-bold transition-all"
-            >
-              {langLabels[vg.lang]}
-            </button>
-          </div>
-
-          {/* Mic / Listen */}
-          <button
-            onClick={vg.isListening ? vg.stopListening : vg.startListening}
-            className={`w-full flex items-center justify-center gap-2 py-2 rounded-xl text-sm font-bold transition-all
-              ${vg.isListening
-                ? 'bg-red-600 text-white animate-pulse'
-                : 'bg-amber-500 hover:bg-amber-400 text-slate-950'}`}
-          >
-            {vg.isListening ? (
-              <><MicOff className="w-4 h-4" /> Stop Listening</>
-            ) : (
-              <><Mic className="w-4 h-4" /> Say a Command</>
-            )}
-          </button>
-
-          {/* Last transcript */}
-          {vg.lastTranscript && (
-            <div className="bg-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-300 truncate">
-              Heard: "{vg.lastTranscript}"
-            </div>
-          )}
-
-          {/* Voice command hints */}
-          <div className="text-[11px] text-slate-500 leading-relaxed">
-            <span className="font-semibold text-slate-400">Commands: </span>
-            "repeat" · "next" · "back" · "select candidate 1" · "select candidate 2"
-          </div>
-        </div>
-      )}
-
-      {/* ── Main pill bar ── */}
       <div
-        className={`flex items-center gap-1 px-3 py-2 rounded-full shadow-2xl border transition-all
-          ${vg.voiceOn
-            ? 'bg-slate-900 border-blue-500'
-            : 'bg-slate-800 border-slate-600 opacity-80'}`}
+        className={`flex items-center gap-2 px-4 py-2.5 rounded-full shadow-2xl border backdrop-blur-md transition-all ${
+          vg.voiceOn
+            ? 'bg-slate-900/95 border-emerald-500 text-white ring-2 ring-emerald-500/20'
+            : 'bg-slate-900/90 border-slate-700 text-slate-300'
+        }`}
         style={{ pointerEvents: 'auto' }}
       >
-        {/* Voice ON/OFF */}
+        {/* Toggle Voice Button */}
         <button
+          id="btn-main-voice-toggle"
           onClick={vg.toggleVoice}
-          title={vg.voiceOn ? 'Turn voice OFF' : 'Turn voice ON'}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all
-            ${vg.voiceOn
-              ? 'bg-blue-600 text-white'
-              : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
+          title={vg.voiceOn ? 'Turn Voice Assistant OFF' : 'Turn Voice Assistant ON'}
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all shadow-sm ${
+            vg.voiceOn
+              ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
+              : 'bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-600'
+          }`}
         >
           {vg.voiceOn ? (
-            <><Volume2 className="w-3.5 h-3.5" /> Voice ON</>
+            <>
+              <Volume2 className="w-4 h-4 text-white" />
+              <span>Voice ON</span>
+            </>
           ) : (
-            <><VolumeX className="w-3.5 h-3.5" /> Voice OFF</>
+            <>
+              <Volume2 className="w-4 h-4 text-amber-400" />
+              <span>Voice Assistant (Voice ON)</span>
+            </>
           )}
         </button>
 
-        {vg.voiceOn && (
-          <>
-            {/* Repeat */}
-            <button
-              onClick={vg.repeat}
-              title="Repeat last message"
-              className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-slate-700 transition-all"
-            >
-              <RefreshCw className="w-3.5 h-3.5" />
-            </button>
-
-            {/* Stop speaking */}
-            <button
-              onClick={vg.stop}
-              disabled={!vg.isSpeaking}
-              title="Stop speaking"
-              className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-slate-700 disabled:opacity-30 transition-all"
-            >
-              <VolumeX className="w-3.5 h-3.5" />
-            </button>
-
-            {/* Language pill */}
-            <button
-              onClick={cycleLanguage}
-              title="Switch language"
-              className="px-2 py-1 rounded-full bg-slate-700 hover:bg-slate-600 text-[11px] font-bold text-slate-200 transition-all"
-            >
-              {langLabels[vg.lang]}
-            </button>
-
-            {/* Expand/collapse */}
-            <button
-              onClick={() => setExpanded((p) => !p)}
-              title="More options"
-              className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-slate-700 transition-all"
-            >
-              {expanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
-            </button>
-          </>
+        {!hasSpeechSupport && (
+          <span className="text-[11px] text-amber-400 px-2 py-0.5 bg-amber-950/60 rounded border border-amber-800">
+            Use Chrome or Edge for voice input
+          </span>
         )}
 
-        {/* Speaking indicator */}
-        {vg.voiceOn && vg.isSpeaking && (
-          <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse ml-1" />
+        {/* Live Status Indicator (When ON) */}
+        {vg.voiceOn && (
+          <div className="flex items-center gap-2 text-xs font-medium pl-1 border-l border-slate-700">
+            {vg.isSpeaking ? (
+              <span className="flex items-center gap-1.5 text-amber-400 font-semibold">
+                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                <span>Speaking...</span>
+              </span>
+            ) : vg.isListening ? (
+              <span className="flex items-center gap-1.5 text-emerald-400 font-semibold">
+                <Mic className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+                <span>Listening...</span>
+              </span>
+            ) : (
+              <span className="text-slate-400">Ready</span>
+            )}
+
+            {vg.lastTranscript && (
+              <span className="text-[11px] text-slate-300 bg-slate-800 px-2 py-0.5 rounded-md truncate max-w-[140px]">
+                "{vg.lastTranscript}"
+              </span>
+            )}
+          </div>
         )}
       </div>
     </div>
   );
 };
+

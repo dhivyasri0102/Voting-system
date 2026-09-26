@@ -1,7 +1,7 @@
 /**
  * Anonymous Credential Service
  * 
- * Provides cryptographically protected, single-use anonymous voting tokens.
+ * Provides cryptographically unlinkable, single-use anonymous voting tokens.
  * Crucial Privacy Principle:
  * - The identity domain issues the token.
  * - The voting domain consumes only the token hash.
@@ -70,7 +70,8 @@ export class AnonymousCredentialService {
     const cred = DataStoreService.getCredential(credentialHash);
 
     if (!cred) {
-      console.warn(`[AnonymousCredentialService] Hash [${hashPrefix}] not found in credential registry. Registered total: ${DataStoreService.getAllCredentials().length}`);
+      const registeredTotal = DataStoreService.getAllCredentials().length;
+      console.warn(`[AnonymousCredentialService] Hash [${hashPrefix}] not found in credential registry. Registered total: ${registeredTotal}`);
       return { isValid: false, reason: 'Invalid or unrecognized voting credential hash.' };
     }
 

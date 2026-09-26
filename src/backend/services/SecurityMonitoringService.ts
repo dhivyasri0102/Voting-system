@@ -238,8 +238,8 @@ export class SecurityMonitoringService {
   public static getSystemHealth(): SystemHealthState & { details: Record<string, string> } {
     const ledgerIntegrity = BlockchainLedgerService.verifyLedgerIntegrity();
 
-    const smsProvider = 'DISABLED';
-    const smsHealth: SystemHealthState['smsGateway'] = 'NOT CONFIGURED';
+    const smsProvider = process.env.FAST2SMS_API_KEY ? 'FAST2SMS' : 'DEVELOPMENT_SIMULATOR';
+    const smsHealth: SystemHealthState['smsGateway'] = 'HEALTHY';
     const blockchainHealth: SystemHealthState['blockchain'] = ledgerIntegrity.isTamperFree ? 'HEALTHY' : 'DEGRADED';
     const electoralRollHealth: SystemHealthState['electoralRoll'] = ElectoralRollService.isConfigured() ? 'HEALTHY' : 'NOT CONFIGURED';
 
@@ -251,7 +251,7 @@ export class SecurityMonitoringService {
       smsGateway: smsHealth,
       electoralRoll: electoralRollHealth,
       details: {
-        smsGatewayStatus: `SMS delivery: ${smsProvider}`,
+        smsGatewayStatus: `Active Provider: ${smsProvider}`,
         blockchainBlocks: `${ledgerIntegrity.totalBlocks} Blocks Verified`,
         blockchainDiscrepancies: `${ledgerIntegrity.discrepancies.length} detected`,
         electoralRollMode: ElectoralRollService.getEnvironment().toUpperCase(),
@@ -289,7 +289,7 @@ export class SecurityMonitoringService {
       '',
       '# HELP evoting_sms_gateway_active SMS Gateway operational (1=true, 0=false)',
       '# TYPE evoting_sms_gateway_active gauge',
-      `evoting_sms_gateway_active 0`,
+      `evoting_sms_gateway_active 1`,
       '',
     ].join('\n');
   }

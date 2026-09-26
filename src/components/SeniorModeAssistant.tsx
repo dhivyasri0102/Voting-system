@@ -22,8 +22,8 @@ const PAGES: PageDef[] = [
   },
   {
     path: '/voter/login',
-    label: 'Voter Login — Enter your Voter ID and mobile OTP',
-    labelTa: 'வாக்காளர் உள்நுழைவு — உங்கள் வாக்காளர் அடையாள அட்டை மற்றும் மொபைல் OTP உள்ளிடுக',
+    label: 'Voter Login — Enter your Voter ID and Aadhaar OTP',
+    labelTa: 'வாக்காளர் உள்நுழைவு — உங்கள் வாக்காளர் அடையாள அட்டை மற்றும் ஆதார் OTP உள்ளிடுக',
     keywords: ['login', 'voter login', 'sign in', 'authenticate', 'voter', 'உள்நுழைவு', 'வாக்காளர்'],
   },
   {
@@ -76,34 +76,69 @@ export const SeniorModeAssistant: React.FC = () => {
   const [showPanel, setShowPanel] = useState(false);
 
   const recognitionRef = useRef<any>(null);
-  const speakQueueRef = useRef<string[]>([]);
+  const activeUttRef = useRef<SpeechSynthesisUtterance | null>(null);
   const isSpeakingRef = useRef(false);
 
   // ── Text-to-speech ──────────────────────────────────────────────────────────
   const speak = useCallback((text: string, onEnd?: () => void) => {
-    if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
+    if (!text || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    
+    try {
+      window.speechSynthesis.cancel();
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
+    } catch {}
+
     const utt = new SpeechSynthesisUtterance(text);
+    activeUttRef.current = utt; // Retain reference to prevent GC
+
     utt.lang = isTamil ? 'ta-IN' : 'en-IN';
-    utt.rate = 0.85;
-    utt.pitch = 1;
+    utt.rate = isTamil ? 0.85 : 0.88;
+    utt.pitch = 1.0;
+
+    try {
+      const voices = window.speechSynthesis.getVoices();
+      if (voices && voices.length > 0) {
+        const targetLang = isTamil ? 'ta' : 'en';
+        const match = voices.find((v) => v.lang.toLowerCase().startsWith(targetLang));
+        if (match) utt.voice = match;
+      }
+    } catch {}
+
     isSpeakingRef.current = true;
     setIsSpeaking(true);
+
     utt.onend = () => {
       isSpeakingRef.current = false;
       setIsSpeaking(false);
+      activeUttRef.current = null;
       onEnd?.();
     };
-    utt.onerror = () => {
+
+    utt.onerror = (e) => {
+      console.warn('SeniorModeAssistant speak error:', e);
       isSpeakingRef.current = false;
       setIsSpeaking(false);
+      activeUttRef.current = null;
       onEnd?.();
     };
-    window.speechSynthesis.speak(utt);
+
+    setTimeout(() => {
+      try {
+        if (window.speechSynthesis.paused) {
+          window.speechSynthesis.resume();
+        }
+        window.speechSynthesis.speak(utt);
+      } catch (err) {
+        console.warn('Failed to speak SeniorMode utterance:', err);
+      }
+    }, 60);
   }, [isTamil]);
 
   const stopSpeaking = useCallback(() => {
     window.speechSynthesis?.cancel();
+    activeUttRef.current = null;
     isSpeakingRef.current = false;
     setIsSpeaking(false);
   }, []);
@@ -114,10 +149,7 @@ export const SeniorModeAssistant: React.FC = () => {
     const page = findPageByPath(location.pathname);
     if (!page) return;
 
-    const label = isTamil ? page.labelTa : page.label;
-    const prompt = isTamil
-      ? `இப்போது நீங்கள் இருக்கும் பக்கம்: ${label}. அடுத்த பக்கத்திற்கு செல்ல "அடுத்து" என்று சொல்லுங்கள் அல்லது பக்கத்தின் பெயரை சொல்லுங்கள்.`
-      : `You are now on: ${label}. Say "next" to go to the next page, or say the name of any page to navigate there.`;
+    const prompt = `Ippodhu neenga irukkura pakkam: ${page.label}. Adutha page-ku poga Next nu sollunga, illa page name sollunga.`;
 
     // Short delay so the page renders first
     const t = setTimeout(() => speak(prompt), 600);
@@ -135,39 +167,60 @@ export const SeniorModeAssistant: React.FC = () => {
 
     stopSpeaking();
 
-    const recognition = new SpeechRecognition();
-    recognitionRef.current = recognition;
-    recognition.lang = isTamil ? 'ta-IN' : 'en-IN';
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 3;
+    try {
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop(); } catch {}
+      }
 
-    recognition.onstart = () => {
-      setIsListening(true);
-      setStatusMsg(isTamil ? 'கேட்கிறேன்...' : 'Listening...');
-    };
+      const recognition = new SpeechRecognition();
+      recognitionRef.current = recognition;
+      recognition.lang = 'en-IN';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 3;
+      recognition.continuous = false;
 
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
-      const said = Array.from(event.results[0])
-        .map((r) => r.transcript)
-        .join(' ');
-      setTranscript(said);
-      handleVoiceCommand(said);
-    };
+      recognition.onstart = () => {
+        setIsListening(true);
+        setStatusMsg('Listening...');
+      };
 
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      recognition.onresult = (event: any) => {
+        let said = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i] && event.results[i][0]) {
+            said += event.results[i][0].transcript;
+          }
+        }
+        if (!said && event.results[0] && event.results[0][0]) {
+          said = event.results[0][0].transcript;
+        }
+        if (said) {
+          setTranscript(said);
+          handleVoiceCommand(said);
+        }
+      };
+
+      recognition.onerror = (event: any) => {
+        console.warn('SpeechRecognition error:', event.error);
+        setIsListening(false);
+        setStatusMsg(`Status: ${event.error}`);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognition.start();
+    } catch (err) {
+      console.warn('Error starting senior recognition:', err);
       setIsListening(false);
-      setStatusMsg(`Error: ${event.error}`);
-    };
-
-    recognition.onend = () => {
-      setIsListening(false);
-    };
-
-    recognition.start();
-  }, [isTamil, stopSpeaking]);
+    }
+  }, [stopSpeaking]);
 
   const stopListening = useCallback(() => {
-    recognitionRef.current?.stop();
+    try {
+      recognitionRef.current?.stop();
+    } catch {}
     setIsListening(false);
   }, []);
 
@@ -177,62 +230,58 @@ export const SeniorModeAssistant: React.FC = () => {
     setStatusMsg(`"${text}"`);
 
     // "next" → go to next page in sequence
-    if (lower.includes('next') || lower.includes('அடுத்து') || lower.includes('forward')) {
+    if (lower.includes('next') || lower.includes('aduthu') || lower.includes('munaadi') || lower.includes('forward')) {
       const next = getNextPage(location.pathname);
       speak(
-        isTamil ? `${next.labelTa} பக்கத்திற்கு செல்கிறேன்.` : `Navigating to ${next.label}.`,
+        `${next.label} page-ku pogirom.`,
         () => navigate(next.path)
       );
       return;
     }
 
     // "back" / "previous"
-    if (lower.includes('back') || lower.includes('previous') || lower.includes('முந்தைய')) {
+    if (lower.includes('back') || lower.includes('previous') || lower.includes('pinnadi') || lower.includes('thirumbi')) {
       navigate(-1);
-      speak(isTamil ? 'முந்தைய பக்கத்திற்கு செல்கிறேன்.' : 'Going back to previous page.');
+      speak('Previous page-ku thirumbi pogirom.');
       return;
     }
 
     // "home"
-    if (lower.includes('home') || lower.includes('முகப்பு')) {
-      speak(isTamil ? 'முகப்பு பக்கத்திற்கு செல்கிறேன்.' : 'Navigating to Home.', () => navigate('/'));
+    if (lower.includes('home') || lower.includes('landing')) {
+      speak('Home page-ku pogirom.', () => navigate('/'));
       return;
     }
 
     // keyword match against page list
     const matched = findPageByKeyword(lower);
     if (matched) {
-      const label = isTamil ? matched.labelTa : matched.label;
       speak(
-        isTamil ? `${label} பக்கத்திற்கு செல்கிறேன்.` : `Navigating to ${label}.`,
+        `${matched.label} page-ku pogirom.`,
         () => navigate(matched.path)
       );
       return;
     }
 
     // "what page" / "where am i"
-    if (lower.includes('where') || lower.includes('what page') || lower.includes('என்ன பக்கம்')) {
+    if (lower.includes('where') || lower.includes('what page')) {
       const page = findPageByPath(location.pathname);
-      if (page) speak(isTamil ? `நீங்கள் இப்போது ${page.labelTa} இல் இருக்கிறீர்கள்.` : `You are currently on ${page.label}.`);
+      if (page) speak(`Neenga ippodhu ${page.label} page-la irukkeenga.`);
       return;
     }
 
     // "repeat" / "again"
-    if (lower.includes('repeat') || lower.includes('again') || lower.includes('மீண்டும்')) {
+    if (lower.includes('repeat') || lower.includes('again') || lower.includes('marubadi')) {
       const page = findPageByPath(location.pathname);
       if (page) {
-        const label = isTamil ? page.labelTa : page.label;
-        speak(isTamil ? `நீங்கள் ${label} இல் இருக்கிறீர்கள்.` : `You are on ${label}.`);
+        speak(`Neenga ${page.label} page-la irukkeenga.`);
       }
       return;
     }
 
     speak(
-      isTamil
-        ? 'மன்னிக்கவும், புரியவில்லை. "அடுத்து", "முந்தைய", அல்லது பக்கத்தின் பெயரை சொல்லுங்கள்.'
-        : 'Sorry, I did not understand. Say "next", "back", "home", "login", "dashboard", or "status".'
+      'Puriyala. "Next", "Back", illa page name sollunga.'
     );
-  }, [location.pathname, navigate, speak, isTamil]);
+  }, [location.pathname, navigate, speak]);
 
   // ── "Any key / Enter" → next page ──────────────────────────────────────────
   useEffect(() => {
@@ -256,11 +305,7 @@ export const SeniorModeAssistant: React.FC = () => {
     setAccessibility((prev) => ({ ...prev, seniorCitizenMode: next }));
     if (next) {
       setShowPanel(true);
-      speak(
-        isTamil
-          ? 'மூத்த குடிமக்கள் பயன்முறை இயக்கப்பட்டது. நான் ஒவ்வொரு பக்கத்தையும் படிப்பேன்.'
-          : 'Senior Mode enabled. I will read out every page for you.'
-      );
+      speak('Senior citizen mode activate aayiduchu. Ovvoru page-aiyum naan padichu kaatuven.');
     } else {
       stopSpeaking();
       stopListening();
